@@ -324,12 +324,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateUI(loggedIn, user = null) {
         isLoggedIn = loggedIn;
         currentUser = user;
+        const userStatusDiv = document.getElementById('user-status');
+
         if (loggedIn) {
             logoutButton.style.display = 'inline-block';
             chatInput.placeholder = 'Nhập tin nhắn...';
+            if (userStatusDiv) {
+                userStatusDiv.textContent = `Xin chào, ${user.name}`;
+            }
         } else {
             logoutButton.style.display = 'none';
             chatInput.placeholder = 'Đăng nhập để trò chuyện...';
+            if (userStatusDiv) {
+                userStatusDiv.textContent = 'Khách';
+            }
         }
     }
 

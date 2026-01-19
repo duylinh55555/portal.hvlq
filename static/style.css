@@ -267,3 +267,8 @@ body {
 .doc-attachment-item a:hover {
   text-decoration: underline;
 }
+
+.user-status {
+  font-weight: bold;
+  margin-bottom: 5px; /* Add some space between user status and date */
+}
