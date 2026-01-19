@@ -242,20 +242,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 itemDiv.appendChild(contentP);
             }
 
-            // Add attachment link at the bottom if a file exists
-            if (doc.file) {
-                const attachmentP = document.createElement('p');
-                attachmentP.classList.add('doc-attachment');
+            // Add attachment links at the bottom if files exist
+            if (doc.files && doc.files.length > 0) {
+                const attachmentContainer = document.createElement('div');
+                attachmentContainer.classList.add('doc-attachment-container');
+                
+                const label = document.createElement('p');
+                label.classList.add('doc-attachment-label');
+                label.textContent = 'Đính kèm:';
+                attachmentContainer.appendChild(label);
 
-                const attachmentLink = document.createElement('a');
-                attachmentLink.href = `/uploads/${doc.file}`;
-                attachmentLink.target = '_blank';
-                attachmentLink.rel = 'noopener noreferrer';
-                attachmentLink.textContent = doc.file; // The filename is the link text
+                doc.files.forEach(file => {
+                    const attachmentItem = document.createElement('div');
+                    attachmentItem.classList.add('doc-attachment-item');
 
-                attachmentP.append('Đính kèm: ');
-                attachmentP.appendChild(attachmentLink);
-                itemDiv.appendChild(attachmentP);
+                    const attachmentLink = document.createElement('a');
+                    attachmentLink.href = `/uploads/${file}`;
+                    attachmentLink.target = '_blank';
+                    attachmentLink.rel = 'noopener noreferrer';
+                    attachmentLink.textContent = file;
+
+                    attachmentItem.appendChild(attachmentLink);
+                    attachmentContainer.appendChild(attachmentItem);
+                });
+
+                itemDiv.appendChild(attachmentContainer);
             }
 
             docList.appendChild(itemDiv);

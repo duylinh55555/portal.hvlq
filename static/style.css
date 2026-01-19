@@ -6,9 +6,18 @@ body {
   background-attachment: fixed;
 }
 
+.content-wrapper {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 0 30px 30px 30px;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
 .row {
   /* Thay đổi từ .body thành body để áp dụng cho thẻ <body> */
-  margin: 0 30px; /* Thêm lề 20px ở hai bên cho toàn bộ nội dung trang */
+  margin: 0; /* Thêm lề 20px ở hai bên cho toàn bộ nội dung trang */
 }
 
 .no-padding-left {
@@ -223,5 +232,31 @@ body {
 }
 
 .doc-attachment a:hover {
+  text-decoration: underline;
+}
+
+/* Styles for multi-file attachments */
+.doc-attachment-container {
+  margin-top: 15px;
+  font-size: 0.9rem;
+}
+
+.doc-attachment-label {
+  font-style: italic;
+  margin-bottom: 5px;
+}
+
+.doc-attachment-item {
+  padding-left: 20px; /* Indent attachment items */
+  margin-bottom: 3px;
+}
+
+.doc-attachment-item a {
+  color: #da251c;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.doc-attachment-item a:hover {
   text-decoration: underline;
 }

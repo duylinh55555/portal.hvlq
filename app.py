@@ -107,13 +107,15 @@ def create_announcement():
 
     title = request.form['title'].strip()
     content = request.form.get('content', '').strip()
-    file = request.files.get('file')
-    filename = None
+    files = request.files.getlist('file')
+    filenames = []
     
-    if file and file.filename:
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
+    for file in files:
+        if file and file.filename:
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            filenames.append(filename)
 
         # =================================================================
         # === PLACEHOLDER: TÍCH HỢP SYNOLOGY NAS ===
@@ -162,7 +164,7 @@ def create_announcement():
             "id": len(announcements) + 1,
             "title": title,
             "content": content,
-            "file": filename,
+            "files": filenames,
             "author": session['user']['name'],
             "timestamp": datetime.utcnow().isoformat() + "Z" # Format UTC ISO 8601
         }
