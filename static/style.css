@@ -268,7 +268,13 @@ body {
   text-decoration: underline;
 }
 
+.user-info-line {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
 .user-status {
   font-weight: bold;
-  margin-bottom: 5px; /* Add some space between user status and date */
 }

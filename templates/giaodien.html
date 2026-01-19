@@ -36,7 +36,10 @@
             </p>
           </div>
           <div class="header-right-column ml-auto">
-            <div id="user-status" class="user-status text-right"></div>
+            <div class="user-info-line">
+              <div id="user-status" class="user-status"></div>
+              <button class="btn btn-danger btn-logout btn-sm" style="display: none; margin-left: 10px;">Đăng xuất</button>
+            </div>
             <div id="currentDateTime" class="current-date-time text-right"></div>
           </div>
         </div>
@@ -357,9 +360,6 @@
                   placeholder="Tìm kiếm..."
                 />
                 <button class="btn btn-primary btn-add-new">Thêm mới</button>
-                <button class="btn btn-danger btn-logout" style="display: none">
-                  Đăng xuất
-                </button>
               </div>
               <div class="doc-list" id="docList">
                 <p>Đang tải danh sách thông báo...</p>
