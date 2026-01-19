@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addNewButton = document.querySelector('.btn-add-new');
     const logoutButton = document.querySelector('.btn-logout');
     let isLoggedIn = false;
+    let currentUser = null;
 
     // --- Login Elements ---
     const loginModal = $('#loginModal');
@@ -134,10 +135,15 @@ document.addEventListener('DOMContentLoaded', function() {
         messages.forEach(msg => {
             const msgElement = document.createElement('div');
             msgElement.classList.add('chat-message');
+            
+            // Highlight messages from the current user
+            if (currentUser && msg.username === currentUser.username) {
+                msgElement.classList.add('my-message');
+            }
 
             const authorSpan = document.createElement('span');
             authorSpan.classList.add('chat-author');
-            authorSpan.textContent = msg.username;
+            authorSpan.textContent = msg.name || msg.username; // Fallback to username if name doesn't exist
 
             const contentSpan = document.createElement('span');
             contentSpan.classList.add('chat-content');
@@ -211,28 +217,48 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         announcements.forEach(doc => {
-            const docLink = document.createElement('a');
-            docLink.classList.add('doc-link');
-            docLink.href = doc.file ? `/uploads/${doc.file}` : '#';
-            if (doc.file) {
-                 docLink.target = '_blank';
-                 docLink.rel = 'noopener noreferrer';
-            } else {
-                docLink.onclick = (e) => e.preventDefault();
-            }
-           
-            const title = document.createElement('span');
-            title.textContent = doc.title;
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('doc-item');
+
+            // Title is now just bold text, not a link
+            const titleHeader = document.createElement('h5');
+            titleHeader.classList.add('doc-title');
+            titleHeader.innerHTML = `<strong>${doc.title}</strong>`;
             
-            const metadata = document.createElement('span');
+            const metadata = document.createElement('p');
             metadata.classList.add('doc-metadata');
             const author = doc.author || 'N/A';
             const date = new Date(doc.timestamp).toLocaleString('vi-VN');
-            metadata.textContent = ` (Tác giả: ${author} - ${date})`;
+            metadata.textContent = `Người đăng: ${author} - ${date}`;
 
-            docLink.appendChild(title);
-            docLink.appendChild(metadata);
-            docList.appendChild(docLink);
+            itemDiv.appendChild(titleHeader);
+            itemDiv.appendChild(metadata);
+
+            // Add content if it exists
+            if (doc.content && doc.content.trim() !== '') {
+                const contentP = document.createElement('p');
+                contentP.classList.add('doc-content');
+                contentP.textContent = doc.content;
+                itemDiv.appendChild(contentP);
+            }
+
+            // Add attachment link at the bottom if a file exists
+            if (doc.file) {
+                const attachmentP = document.createElement('p');
+                attachmentP.classList.add('doc-attachment');
+
+                const attachmentLink = document.createElement('a');
+                attachmentLink.href = `/uploads/${doc.file}`;
+                attachmentLink.target = '_blank';
+                attachmentLink.rel = 'noopener noreferrer';
+                attachmentLink.textContent = doc.file; // The filename is the link text
+
+                attachmentP.append('Đính kèm: ');
+                attachmentP.appendChild(attachmentLink);
+                itemDiv.appendChild(attachmentP);
+            }
+
+            docList.appendChild(itemDiv);
         });
     }
 
@@ -284,8 +310,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- AUTHENTICATION & CORE LOGIC ---
     // =================================================================
     
-    function updateUI(loggedIn) {
+    function updateUI(loggedIn, user = null) {
         isLoggedIn = loggedIn;
+        currentUser = user;
         if (loggedIn) {
             logoutButton.style.display = 'inline-block';
             chatInput.placeholder = 'Nhập tin nhắn...';
@@ -299,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch('/api/check_auth');
             const data = await response.json();
-            updateUI(data.logged_in);
+            updateUI(data.logged_in, data.user);
         } catch (error) {
             console.error('Error checking auth status:', error);
             updateUI(false);

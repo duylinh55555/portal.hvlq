@@ -1,5 +1,28 @@
 [
     {
+        "id": 5,
+        "title": "thêm cái nữa xem sao",
+        "content": "áoilpdunfoaisjudhfgaoisudhfhlasd\r\nádlfiuhasdoilfhbgasd\r\náldfihasldkfjbnasdf\r\nádlfkhbasdlfjbasdf\r\nákdfjyhbaskdifjbnasd\r\nkljhbasdfliguas",
+        "file": "BB_hop_to_Hanh_Chinh_-2025-2026.doc",
+        "author": "Phòng Chính trị",
+        "timestamp": "2026-01-19T11:43:48.011116Z"
+    },
+    {
+        "id": 4,
+        "title": "Chú ý",
+        "content": "Hiện nay, cơ quan đã phát hành thẻ ra vào",
+        "file": "grok.docx",
+        "author": "Phòng Chính trị",
+        "timestamp": "2026-01-19T11:35:28.951162Z"
+    },
+    {
+        "id": 3,
+        "title": "thông báo nhanh",
+        "file": "grok.docx",
+        "author": "Phòng Chính trị",
+        "timestamp": "2026-01-19T10:56:01.439310Z"
+    },
+    {
         "id": 2,
         "title": "Kế hoạch đột xuất",
         "file": "Danh_sach_loi_phan_mem_17_12.docx",

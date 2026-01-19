@@ -23,17 +23,24 @@ ANNOUNCEMENTS_FILE = 'announcements.json'
 # Cấu hình file lưu chat
 CHAT_HISTORY_FILE = 'chat_history.json'
 
-# Lưu trữ người dùng giả để demo
-USERS = {
-    "admin": "password123",
-    "user": "123"
-}
+# Cấu hình file lưu trữ người dùng
+USERS_FILE = 'users.json'
+
+def load_users():
+    """Tải danh sách người dùng từ file JSON."""
+    if not os.path.exists(USERS_FILE):
+        return {}
+    with open(USERS_FILE, 'r', encoding='utf-8') as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return {}
 
 # --- Decorator Yêu cầu Đăng nhập ---
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if "username" not in session:
+        if "user" not in session:
             if request.path.startswith('/api/'):
                 return jsonify({"success": False, "message": "Authentication required"}), 401
             return redirect(url_for('index'))
@@ -46,7 +53,6 @@ def index():
     return render_template('giaodien.html')
 
 @app.route('/uploads/<path:filename>')
-@login_required
 def uploaded_file(filename):
     """Phục vụ file đã được tải lên. Yêu cầu đăng nhập để xem file."""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -57,20 +63,27 @@ def api_login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    if username in USERS and USERS[username] == password:
-        session['username'] = username
+    users = load_users()
+    user_data = users.get(username)
+
+    if user_data and user_data.get('password') == password:
+        session['user'] = {
+            'username': username,
+            'name': user_data.get('name', username) 
+        }
         return jsonify({"success": True, "message": "Đăng nhập thành công."})
+    
     return jsonify({"success": False, "message": "Tên đăng nhập hoặc mật khẩu không đúng."}), 401
 
 @app.route('/api/logout')
 def api_logout():
-    session.pop('username', None)
+    session.pop('user', None)
     return jsonify({"success": True, "message": "Đăng xuất thành công."})
 
 @app.route('/api/check_auth')
 def api_check_auth():
-    if 'username' in session:
-        return jsonify({"logged_in": True, "username": session['username']})
+    if 'user' in session:
+        return jsonify({"logged_in": True, "user": session['user']})
     return jsonify({"logged_in": False})
 
 @app.route('/api/get_announcements')
@@ -93,6 +106,7 @@ def create_announcement():
         return jsonify({"success": False, "message": "Tiêu đề là bắt buộc."}), 400
 
     title = request.form['title'].strip()
+    content = request.form.get('content', '').strip()
     file = request.files.get('file')
     filename = None
     
@@ -147,8 +161,9 @@ def create_announcement():
         new_announcement = {
             "id": len(announcements) + 1,
             "title": title,
+            "content": content,
             "file": filename,
-            "author": session.get('username', 'N/A'),
+            "author": session['user']['name'],
             "timestamp": datetime.utcnow().isoformat() + "Z" # Format UTC ISO 8601
         }
         announcements.insert(0, new_announcement) # Thêm vào đầu danh sách
@@ -174,7 +189,7 @@ def handle_chat_messages():
 
     if request.method == 'POST':
         # Chỉ người dùng đã đăng nhập mới được gửi tin nhắn
-        if "username" not in session:
+        if "user" not in session:
             return jsonify({"success": False, "message": "Authentication required"}), 401
         
         data = request.get_json()
@@ -185,7 +200,8 @@ def handle_chat_messages():
         
         new_message = {
             "id": int(datetime.utcnow().timestamp() * 1000), # Dùng timestamp cho ID
-            "username": session['username'],
+            "username": session['user']['username'],
+            "name": session['user']['name'],
             "message": message_text,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }

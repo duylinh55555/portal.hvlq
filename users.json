@@ -1,0 +1,14 @@
+{
+    "admin": {
+        "password": "password123",
+        "name": "Quản trị viên"
+    },
+    "user": {
+        "password": "123",
+        "name": "Người dùng"
+    },
+    "phongct": {
+        "password": "123",
+        "name": "Phòng Chính trị"
+    }
+}

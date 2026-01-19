@@ -10,5 +10,12 @@
         "username": "user",
         "message": "Một ngày an lành",
         "timestamp": "2026-01-18T14:38:38.045830Z"
+    },
+    {
+        "id": 1768794996991,
+        "username": "phongct",
+        "name": "Phòng Chính trị",
+        "message": "Chào mọi người",
+        "timestamp": "2026-01-19T10:56:36.991915Z"
     }
 ]

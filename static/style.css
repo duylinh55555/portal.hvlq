@@ -138,24 +138,35 @@ body {
 .tab-content {
   margin-top: 20px;
 }
+/* Styles for new announcement layout */
+.doc-item {
+  padding: 15px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.doc-item:last-child {
+  border-bottom: none;
+}
+
+.doc-title {
+  margin-bottom: 4px;
+}
+
+.doc-title strong {
+  font-size: 1.15rem; /* Slightly larger than normal text */
+  font-weight: bold;
+  color: #333;
+}
+
+.doc-metadata {
+  font-size: 0.8rem;
+  color: #6c757d; /* Muted grey color */
+  margin-bottom: 0;
+}
+
 .doc-list {
   max-height: 700px;
   overflow-y: auto;
-}
-.doc-link {
-  display: block;
-  padding: 8px;
-  background-color: #f9f9f9;
-  border-bottom: 1px solid #ddd;
-  border-radius: 4px;
-  margin-bottom: 5px;
-  text-decoration: none;
-  color: #333;
-}
-.doc-link:hover {
-  background-color: #eaeaea;
-  color: #da251c;
-  text-decoration: none;
 }
 .slogan {
   font-style: italic;
@@ -190,4 +201,27 @@ body {
 
 .right-section {
   min-height: 858px;
+}
+
+.doc-content {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #3b3b3b;
+  white-space: pre-wrap; /* Respects newlines and spaces in the content */
+}
+
+.doc-attachment {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.doc-attachment a {
+  color: #da251c;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.doc-attachment a:hover {
+  text-decoration: underline;
 }
