@@ -1,0 +1,193 @@
+body {
+  background-image: url("/static/img/background/1.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.row {
+  /* Thay đổi từ .body thành body để áp dụng cho thẻ <body> */
+  margin: 0 30px; /* Thêm lề 20px ở hai bên cho toàn bộ nội dung trang */
+}
+
+.no-padding-left {
+  padding-left: 0 !important;
+}
+
+.no-padding-right {
+  padding-right: 0 !important;
+}
+.main-header {
+  background-color: #007bff; /* Màu xanh dương của Bootstrap primary */
+  color: #fff;
+  padding: 15px 0;
+  text-align: left;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.main-header h1 {
+  margin: 0;
+  font-size: 36px;
+}
+.current-date-time {
+  font-size: 16px;
+}
+.main-footer {
+  background-color: #343a40; /* Màu xám đậm của Bootstrap dark */
+  color: #fff;
+  padding: 15px 0;
+  /* text-align: center; */ /* Bỏ thuộc tính này để dùng flexbox cho container */
+  margin-top: 30px; /* Khoảng cách với nội dung phía trên */
+  font-size: 14px;
+}
+.main-footer .container {
+  display: flex;
+  justify-content: space-between; /* Đẩy các phần tử sang hai bên */
+  align-items: center; /* Căn giữa theo chiều dọc */
+  flex-wrap: wrap; /* Cho phép xuống dòng trên màn hình nhỏ */
+}
+.footer-copyright {
+  margin-bottom: 0; /* Loại bỏ margin dưới cùng mặc định của p */
+}
+.visit-counter {
+  text-align: right; /* Căn chỉnh nội dung của div này sang phải */
+  font-size: 13px; /* Kích thước font nhỏ hơn một chút cho bộ đếm */
+}
+.visit-counter p {
+  margin-bottom: 2px; /* Giảm khoảng cách giữa các dòng của bộ đếm */
+}
+.section {
+  background-color: #fff;
+  padding: 25px;
+  margin: 30px 0px;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+.grid-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+  margin-top: 20px;
+}
+.grid-buttons button {
+  flex: 1;
+}
+.btn {
+  background-color: #e63a31;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.btn:hover {
+  background-color: #ef0c00;
+}
+.btn:active {
+  color: #fff;
+}
+
+.item-link {
+  background-color: rgba(255, 255, 255, 0.5);
+  padding: 10px;
+  border-radius: 6px;
+  min-height: 200px; /* Kéo dài chiều cao của mỗi ô hơn nữa */
+  display: flex; /* Sử dụng flexbox để căn giữa nội dung */
+  flex-direction: column; /* Xếp icon và chữ theo chiều dọc */
+  justify-content: center; /* Căn giữa nội dung theo chiều dọc */
+  text-align: center;
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+}
+.item-link:hover {
+  background-color: #e0e0e0;
+  color: #da251c;
+  text-decoration: none;
+}
+.item-icon {
+  display: block;
+  margin-bottom: 5px;
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-left: auto;
+  margin-right: auto;
+}
+.search-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.search-box {
+  /* margin-bottom is now on .search-container */
+}
+.btn-add-new {
+  margin-left: 10px;
+  white-space: nowrap;
+}
+.nav-tabs {
+  margin-top: 20px;
+}
+.nav-tabs .nav-link:not(.active):hover {
+  color: #da251c;
+  text-decoration: none;
+}
+.tab-content {
+  margin-top: 20px;
+}
+.doc-list {
+  max-height: 700px;
+  overflow-y: auto;
+}
+.doc-link {
+  display: block;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  text-decoration: none;
+  color: #333;
+}
+.doc-link:hover {
+  background-color: #eaeaea;
+  color: #da251c;
+  text-decoration: none;
+}
+.slogan {
+  font-style: italic;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #f8f9fa;
+}
+
+.main-footer .container-fluid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-copyright {
+  font-size: larger;
+  font-weight: 500;
+  text-align: center;
+  font-family: "Oswald", sans-serif;
+}
+
+.footer-info {
+  padding-left: 10%;
+  text-align: center;
+}
+
+.footer-under {
+  margin-top: 10px;
+  color: #b0b0b0;
+}
+
+.right-section {
+  min-height: 858px;
+}

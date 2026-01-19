@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cổng thông tin điện tử Học viện Lục quân</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='img/logo/logo.ico') }}"
+    />
+  </head>
+
+  <body class="container-fluid" style="padding: 0">
+    <header class="main-header">
+      <div class="container-fluid">
+        <div class="d-flex align-items-center">
+          <div class="header-logo">
+            <img
+              src="{{ url_for('static', filename='img/logo/logo.png') }}"
+              alt="Logo Học viện Lục quân"
+              style="height: 80px; margin-right: 20px"
+            />
+          </div>
+          <div class="header-text">
+            <h1>Cổng thông tin điện tử Học viện Lục quân</h1>
+            <p class="slogan">
+              Kiên định vững vàng - Đoàn kết nhất trí - Chủ động sáng tạo - Khắc
+              phục khó khăn - Hoàn thành nhiệm vụ
+            </p>
+          </div>
+          <div id="currentDateTime" class="current-date-time ml-auto"></div>
+        </div>
+      </div>
+    </header>
+
+    <div class="row">
+      <!-- Khung trái -->
+      <div class="col-md-8 no-padding-left">
+        <div class="section">
+          <h4>HỆ THÔNG TIN DÙNG CHUNG BỘ QUỐC PHÒNG</h4>
+
+          <div class="grid-buttons">
+            <a
+              href="http://quanlyvanban.bqp"
+              class="item-link link-graph"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/document-manager.png') }}"
+                alt="QUẢN LÝ VĂN BẢN, HỒ SƠ CÔNG VIỆC"
+                class="item-icon"
+              />
+              QUẢN LÝ VĂN BẢN,<br />
+              HỒ SƠ CÔNG VIỆC
+            </a>
+            <a
+              href="https://mail.bqp"
+              class="item-link link-cbdh"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/mail.JPG') }}"
+                alt="THƯ ĐIỆN TỬ BỘ QUỐC PHÒNG"
+                class="item-icon"
+              />
+              THƯ ĐIỆN TỬ <br />
+              BỘ QUỐC PHÒNG
+            </a>
+            <a
+              href="http://misten.bqp"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/misten.png') }}"
+                alt="BÌNH DÂN HỌC VỤ SỐ"
+                class="item-icon"
+              />
+              MISTEN
+            </a>
+            <a
+              href="https://qlms.bqp"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/qlms.png') }}"
+                alt="BÌNH DÂN HỌC VỤ SỐ"
+                class="item-icon"
+              />
+              BÌNH DÂN HỌC VỤ SỐ
+            </a>
+          </div>
+        </div>
+
+        <div class="section">
+          <h4>PHẦN MỀM NỘI BỘ</h4>
+          <div class="grid-buttons">
+            <a
+              href="http://cddh.hvlq.bqp"
+              class="item-link link-mail"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/document.png') }}"
+                alt="HỆ THÔNG TIN "
+                class="item-icon"
+              />
+              HỆ THÔNG TIN <br />
+              CHỈ ĐẠO ĐIỀU HÀNH
+            </a>
+            <a
+              href="http://hvlq.bqp"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/logo.png') }}"
+                alt="TIN TỨC, KHQS"
+                class="item-icon"
+              />
+              TIN TỨC, KHQS
+            </a>
+            <a
+              href="http://quanlydaotao.hvlq.bqp"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/logo.png') }}"
+                alt="TIN TỨC, KHQS"
+                class="item-icon"
+              />
+              QUẢN LÝ ĐÀO TẠO
+            </a>
+            <a
+              href="http://daovan.hvlq.bqp"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/checker.png') }}"
+                alt="HỘI NGHỊ, TRUYỀN HÌNH TRỰC TUYẾN"
+                class="item-icon"
+              />
+              KIỂM TRA ĐẠO VĂN
+            </a>
+            <a
+              href="http://thuvien.hvlq.bqp"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/library.png') }}"
+                alt="THƯ VIỆN TRỰC TUYẾN"
+                class="item-icon"
+              />
+              THƯ VIỆN TRỰC TUYẾN
+            </a>
+            <a
+              href="http://hvlq.bqp:81/TapChi"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/newspaper.png') }}"
+                alt="TẠP CHÍ NGHIÊN CỨU CHIẾN THUẬT, CHIẾN DỊCH"
+                class="item-icon"
+              />
+              TẠP CHÍ NGHIÊN CỨU <br />
+              CHIẾN THUẬT, CHIẾN DỊCH
+            </a>
+            <a
+              href=" http://tructuyen.hvlq.bqp"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/meeting.png') }}"
+                alt="HỘI NGHỊ, TRUYỀN HÌNH TRỰC TUYẾN"
+                class="item-icon"
+              />
+              HỘI NGHỊ, TRUYỀN HÌNH <br />
+              TRỰC TUYẾN
+            </a>
+            <a
+              href="http://daovan.hvlq.bqp"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/online-exam.png') }}"
+                alt="ANH VĂN, THI TRẮC NGHIỆM"
+                class="item-icon"
+              />
+              ANH VĂN, <br />
+              THI TRẮC NGHIỆM
+            </a>
+          </div>
+        </div>
+
+        <div class="section">
+          <h4>GIÁM SÁT, ĐIỀU HÀNH</h4>
+          <div class="grid-buttons">
+            <a
+              href="http://daovan.hvlq.bqp"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/gate.png') }}"
+                alt="QUẢN LÝ RA VÀO CỔNG"
+                class="item-icon"
+              />
+              QUẢN LÝ <br />
+              RA VÀO CỔNG
+            </a>
+            <a href="https://hvlq.fms.bqp" class="item-link link-update">
+              <img
+                src="{{ url_for('static', filename='img/logo/nextav.png') }}"
+                alt="FMS"
+                class="item-icon"
+              />
+              FMS <br />(Giám sát ATTT, ANM)
+            </a>
+            <a href="https://86.2.128.18" class="item-link link-update">
+              <img
+                src="{{ url_for('static', filename='img/logo/prtg.png') }}"
+                alt="PRTG"
+                class="item-icon"
+              />
+              PRTG <br />(Quản trị Hạ tầng mạng)
+            </a>
+          </div>
+        </div>
+
+        <div class="section">
+          <h4>TIỆN ÍCH</h4>
+          <div class="grid-buttons">
+            <a
+              href="https://example.com/update"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/driver.png') }}"
+                alt="DRIVER"
+                class="item-icon"
+              />
+              DRIVER
+            </a>
+            <a
+              href="https://example.com/update"
+              class="item-link link-update"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="{{ url_for('static', filename='img/logo/soft-lib.png') }}"
+                alt="KHO PHẦN MỀM"
+                class="item-icon"
+              />
+              KHO PHẦN MỀM
+            </a>
+            <a href="http://speedtest.hvlq.bqp" class="item-link link-update">
+              <img
+                src="{{ url_for('static', filename='img/logo/speedtest.png') }}"
+                alt="DRIVER"
+                class="item-icon"
+              />
+              SPEEDTEST <br />
+              (Đo tốc độ mạng)
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khung phải -->
+      <div class="col-md-4 no-padding-right">
+        <div class="section right-section">
+          <h4>Thông báo nhanh, trao đổi thông tin</h4>
+          <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <a
+                class="nav-link active"
+                id="vanban-tab"
+                data-toggle="tab"
+                href="#vanban"
+                role="tab"
+                aria-controls="vanban"
+                aria-selected="true"
+                >Thông báo</a
+              >
+            </li>
+            <li class="nav-item" role="presentation">
+              <a
+                class="nav-link"
+                id="media-tab"
+                data-toggle="tab"
+                href="#media"
+                role="tab"
+                aria-controls="media"
+                aria-selected="false"
+                >Video, Hình ảnh</a
+              >
+            </li>
+            <li class="nav-item" role="presentation">
+              <a
+                class="nav-link"
+                id="chat-tab"
+                data-toggle="tab"
+                href="#chat"
+                role="tab"
+                aria-controls="chat"
+                aria-selected="false"
+                >Trò chuyện trực tuyến</a
+              >
+            </li>
+          </ul>
+          <div class="tab-content" id="myTabContent">
+            <div
+              class="tab-pane fade show active"
+              id="vanban"
+              role="tabpanel"
+              aria-labelledby="vanban-tab"
+            >
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="searchInput"
+                  class="form-control search-box"
+                  placeholder="Tìm kiếm..."
+                />
+                <button class="btn btn-primary btn-add-new">Thêm mới</button>
+                <button class="btn btn-danger btn-logout" style="display: none">
+                  Đăng xuất
+                </button>
+              </div>
+              <div class="doc-list" id="docList">
+                <p>Đang tải danh sách thông báo...</p>
+              </div>
+            </div>
+            <div
+              class="tab-pane fade"
+              id="media"
+              role="tabpanel"
+              aria-labelledby="media-tab"
+            >
+              <p>Nội dung media sẽ được hiển thị ở đây.</p>
+            </div>
+            <div
+              class="tab-pane fade"
+              id="chat"
+              role="tabpanel"
+              aria-labelledby="chat-tab"
+            >
+              <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                  <!-- Messages will be loaded here -->
+                </div>
+                <form id="chat-input-form">
+                  <input
+                    type="text"
+                    id="chat-message-input"
+                    class="form-control"
+                    placeholder="Nhập tin nhắn..."
+                    autocomplete="off"
+                    required
+                  />
+                  <button type="submit" class="btn btn-primary">Gửi</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div
+      class="modal fade"
+      id="loginModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="loginModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="loginModalLabel">Đăng nhập</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form id="loginForm">
+              <div class="form-group">
+                <label for="username">Tên đăng nhập</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="username"
+                  name="username"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="password">Mật khẩu</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="password"
+                  name="password"
+                  required
+                />
+              </div>
+              <div
+                id="login-error"
+                class="alert alert-danger"
+                style="display: none"
+              ></div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Đóng
+            </button>
+            <button type="button" class="btn btn-primary" id="loginSubmit">
+              Đăng nhập
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Announcement Modal -->
+    <div
+      class="modal fade"
+      id="addAnnouncementModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="addAnnouncementModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addAnnouncementModalLabel">
+              Tạo thông báo mới
+            </h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form id="announcementForm" enctype="multipart/form-data">
+              <div class="form-group">
+                <label for="announcementTitle">Tiêu đề</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="announcementTitle"
+                  name="title"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="announcementFile">Chọn file (tùy chọn)</label>
+                <input
+                  type="file"
+                  class="form-control-file"
+                  id="announcementFile"
+                  name="file"
+                />
+              </div>
+              <div
+                id="upload-error"
+                class="alert alert-danger"
+                style="display: none"
+              ></div>
+              <div
+                id="upload-success"
+                class="alert alert-success"
+                style="display: none"
+              ></div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submitAnnouncement"
+            >
+              Đăng
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="main-footer">
+      <div class="container-fluid">
+        <div></div>
+        <div class="footer-info">
+          <p class="footer-copyright">
+            Học viện Lục quân - 2B Lữ Gia, phường Lâm Viên - Đà Lạt, Lâm Đồng
+          </p>
+          <p class="footer-under">
+            &copy; 2026 - Ban Công nghệ thông tin, Văn phòng
+          </p>
+        </div>
+        <div id="visitCounter" class="visit-counter">
+          <p>Truy cập hôm nay: <span id="dailyCount">0</span></p>
+          <p>Truy cập tháng này: <span id="monthlyCount">0</span></p>
+          <p>Tổng lượt truy cập: <span id="totalCount">0</span></p>
+        </div>
+      </div>
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
