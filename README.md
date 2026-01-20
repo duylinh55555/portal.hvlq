@@ -58,7 +58,77 @@ Mở trình duyệt web của bạn (Chrome, Firefox, etc.) và truy cập vào 
 
 ## Thông tin đăng nhập Demo
 
-Bạn có thể sử dụng các tài khoản sau để đăng nhập và thử chức năng "Thêm mới":
+Bạn có thể sử dụng các tài khoản sau để đăng nhập và thử chức năng "### Hướng dẫn Cài đặt trên Server Ubuntu 22 Offline
+
+Đây là quy trình để triển khai ứng dụng trên một máy chủ Ubuntu không có kết nối internet. Yêu cầu đã chuẩn bị sẵn 2 thư mục trong project:
+- `packages/`: Chứa các gói thư viện Python đã được tải về.
+- `ubuntu-libs/`: Chứa các file `.deb` của các gói hệ thống cơ bản (python3-pip, unzip, ...).
+
+---
+
+#### **Phần 1: Cài đặt các gói hệ thống cơ bản**
+
+Sau khi đã sao chép toàn bộ thư mục dự án vào server, hãy thực hiện các bước sau để cài đặt các gói `.deb` cần thiết.
+
+1.  **Di chuyển vào thư mục `ubuntu-libs`:**
+    ```bash
+    cd /path/to/your/project/ubuntu-libs
+    ```
+
+2.  **Cài đặt tất cả các file .deb:**
+    Lệnh `dpkg` sẽ cài đặt tất cả các gói trong thư mục. Dùng `*` để đảm bảo nó cài đặt cả các gói phụ thuộc bạn đã tải về.
+    ```bash
+    sudo dpkg -i *.deb
+    ```
+    Nếu có lỗi về thiếu phụ thuộc, bạn cần quay lại máy có internet, tìm và tải file `.deb` của gói còn thiếu đó, sau đó lặp lại bước này.
+
+---
+
+#### **Phần 2: Cài đặt Ứng dụng và Thư viện Python**
+
+Sau khi các công cụ hệ thống đã sẵn sàng, hãy cài đặt môi trường cho ứng dụng.
+
+1.  **Di chuyển về thư mục gốc của dự án.**
+    ```bash
+    cd /path/to/your/project
+    ```
+
+2.  **Tạo và kích hoạt môi trường ảo (venv):**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+
+3.  **Cài đặt các thư viện Python offline:**
+    Sử dụng các gói đã được tải sẵn trong thư mục `packages`.
+    ```bash
+    pip install --no-index --find-links=./packages -r requirements.txt
+    ```
+
+4.  **Tạo thư mục `uploads`:**
+    Đảm bảo thư mục này tồn tại để ứng dụng có thể ghi file.
+    ```bash
+    mkdir -p uploads
+    ```
+
+---
+
+#### **Phần 3: Chạy Ứng dụng**
+
+Sử dụng Gunicorn để chạy ứng dụng một cách ổn định.
+
+1.  **Khởi động Gunicorn:**
+    (Phải chắc chắn rằng bạn vẫn đang ở trong môi trường ảo `venv`)
+    ```bash
+    gunicorn --workers 3 --bind 0.0.0.0:8000 app:app
+    ```
+    - `--workers 3`: Số tiến trình chạy ứng dụng.
+    - `--bind 0.0.0.0:8000`: Lắng nghe trên tất cả các IP của server tại cổng 8000.
+    - `app:app`: Tìm đối tượng `app` trong file `app.py`.
+
+2.  **Truy cập ứng dụng:**
+    Mở trình duyệt từ một máy trong cùng mạng và truy cập vào địa chỉ: `http://<IP_CUA_SERVER>:8000`
+":
 
 - **Tài khoản 1:**
   - **Tên đăng nhập:** `admin`
