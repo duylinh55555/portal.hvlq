@@ -289,3 +289,90 @@ body {
   text-decoration: underline;
   color: #fff;
 }
+
+/* --- Chat Bubble Styles --- */
+.chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Khoảng cách giữa các tin nhắn */
+    padding: 10px;
+}
+
+.chat-message-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 80%;
+    align-self: flex-start; /* Tin nhắn của người khác bên trái */
+}
+
+.my-message-container {
+    align-self: flex-end; /* Tin nhắn của mình bên phải */
+}
+
+.chat-author {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 4px;
+    margin-left: 10px;
+}
+
+.my-message-container .chat-author {
+    align-self: flex-end; /* Tên của mình cũng căn phải */
+    margin-right: 10px;
+}
+
+
+.chat-message {
+    padding: 8px 12px;
+    border-radius: 18px;
+    background-color: #e9e9eb; /* Màu nền cho tin nhắn nhận */
+    color: #000;
+    width: fit-content;
+    display: flex;
+    flex-direction: column; /* Xếp content và timestamp theo chiều dọc */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    
+}
+
+.my-message {
+    background-color: #007bff; /* Màu nền cho tin nhắn gửi đi */
+    color: #fff;
+}
+
+.chat-timestamp {
+    font-size: 0.7rem;
+    color: #6c757d;
+    align-self: flex-end; /* Đẩy timestamp xuống góc dưới bên phải */
+    margin-top: 5px;
+}
+
+.my-message .chat-timestamp {
+    color: #f0f0f0; /* Màu timestamp cho tin nhắn của mình */
+}
+
+.chat-message-server {
+    text-align: center;
+    font-style: italic;
+    color: #6c757d;
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    /* Các thuộc tính khác đã được định nghĩa */
+}
+
+#chat-input-form {
+    display: flex;
+    padding-top: 10px;
+    border-top: 1px solid #dee2e6;
+}

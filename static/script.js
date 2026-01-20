@@ -138,17 +138,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         messages.forEach(msg => {
+            const msgContainer = document.createElement('div');
+            msgContainer.classList.add('chat-message-container');
+
             const msgElement = document.createElement('div');
             msgElement.classList.add('chat-message');
             
-            // Highlight messages from the current user
             if (currentUser && msg.username === currentUser.username) {
+                msgContainer.classList.add('my-message-container');
                 msgElement.classList.add('my-message');
             }
 
             const authorSpan = document.createElement('span');
             authorSpan.classList.add('chat-author');
-            authorSpan.textContent = msg.name || msg.username; // Fallback to username if name doesn't exist
+            authorSpan.textContent = msg.name || msg.username;
 
             const contentSpan = document.createElement('span');
             contentSpan.classList.add('chat-content');
@@ -158,10 +161,12 @@ document.addEventListener('DOMContentLoaded', function() {
             timeSpan.classList.add('chat-timestamp');
             timeSpan.textContent = new Date(msg.timestamp).toLocaleTimeString('vi-VN');
 
-            msgElement.appendChild(authorSpan);
             msgElement.appendChild(contentSpan);
             msgElement.appendChild(timeSpan);
-            chatMessages.appendChild(msgElement);
+            
+            msgContainer.appendChild(authorSpan);
+            msgContainer.appendChild(msgElement);
+            chatMessages.appendChild(msgContainer);
         });
 
         // Auto-scroll to the bottom
@@ -181,11 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
     chatForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         const message = chatInput.value.trim();
-
-        if (!isLoggedIn) {
-            alert('Bạn phải đăng nhập để gửi tin nhắn.');
-            return;
-        }
 
         if (message) {
             try {
@@ -361,20 +361,22 @@ document.addEventListener('DOMContentLoaded', function() {
         isLoggedIn = loggedIn;
         currentUser = user;
         const userStatusDiv = document.getElementById('user-status');
+        
+        chatInput.disabled = false; // Luôn cho phép chat
 
         if (loggedIn) {
             logoutButton.style.display = 'inline-block';
             loginLink.style.display = 'none';
-            chatInput.placeholder = 'Nhập tin nhắn...';
+            chatInput.placeholder = `Nhập tin nhắn (với tư cách ${user.name})...`;
             if (userStatusDiv) {
                 userStatusDiv.textContent = `Xin chào, ${user.name}`;
             }
         } else {
             logoutButton.style.display = 'none';
             loginLink.style.display = 'inline-block';
-            chatInput.placeholder = 'Đăng nhập để trò chuyện...';
+            chatInput.placeholder = `Nhập tin nhắn (với tư cách ${user.name})...`;
             if (userStatusDiv) {
-                userStatusDiv.textContent = 'Khách';
+                userStatusDiv.textContent = `Bạn là Khách (${user.name})`;
             }
         }
     }
