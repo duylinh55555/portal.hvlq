@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Common Elements ---
     const addNewButton = document.querySelector('.btn-add-new');
     const logoutButton = document.querySelector('.btn-logout');
+    const loginLink = document.getElementById('login-link');
     let isLoggedIn = false;
     let currentUser = null;
 
@@ -328,12 +329,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (loggedIn) {
             logoutButton.style.display = 'inline-block';
+            loginLink.style.display = 'none';
             chatInput.placeholder = 'Nhập tin nhắn...';
             if (userStatusDiv) {
                 userStatusDiv.textContent = `Xin chào, ${user.name}`;
             }
         } else {
             logoutButton.style.display = 'none';
+            loginLink.style.display = 'inline-block';
             chatInput.placeholder = 'Đăng nhập để trò chuyện...';
             if (userStatusDiv) {
                 userStatusDiv.textContent = 'Khách';
@@ -407,6 +410,11 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Logout request failed:', error);
         }
+    });
+
+    loginLink.addEventListener('click', function(event) {
+        event.preventDefault();
+        loginModal.modal('show');
     });
 
     // --- Initial Page Load ---

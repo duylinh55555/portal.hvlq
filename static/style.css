@@ -32,7 +32,7 @@ body {
 }
 .main-header h1 {
   margin: 0;
-  font-size: 36px;
+  font-size: 32px;
 }
 .current-date-time {
   font-size: 16px;
@@ -187,7 +187,7 @@ body {
   font-style: italic;
   margin-top: 5px;
   margin-bottom: 10px;
-  font-size: 18px;
+  font-size: 16px;
   color: #f8f9fa;
 }
 
@@ -277,4 +277,15 @@ body {
 
 .user-status {
   font-weight: bold;
+}
+
+.logout-link {
+  color: #d8d8d8;
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.logout-link:hover {
+  text-decoration: underline;
+  color: #fff;
 }
