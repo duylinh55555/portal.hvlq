@@ -88,15 +88,29 @@ def api_check_auth():
 
 @app.route('/api/get_announcements')
 def get_announcements():
-    """Lấy danh sách các thông báo từ file JSON."""
+    """Lấy danh sách các thông báo từ file JSON với phân trang."""
     if not os.path.exists(ANNOUNCEMENTS_FILE):
-        return jsonify([])
+        return jsonify({"announcements": [], "total": 0})
+
+    try:
+        offset = int(request.args.get('offset', 0))
+        limit = int(request.args.get('limit', 10))
+    except ValueError:
+        return jsonify({"success": False, "message": "offset và limit phải là số nguyên."}), 400
+
     with open(ANNOUNCEMENTS_FILE, 'r', encoding='utf-8') as f:
         try:
             announcements = json.load(f)
         except json.JSONDecodeError:
             announcements = []
-    return jsonify(announcements)
+
+    total_announcements = len(announcements)
+    paginated_announcements = announcements[offset:offset + limit]
+
+    return jsonify({
+        "announcements": paginated_announcements,
+        "total": total_announcements
+    })
 
 @app.route('/api/announcements', methods=['POST'])
 @login_required

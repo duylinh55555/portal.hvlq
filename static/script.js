@@ -113,7 +113,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadSuccess = document.getElementById('upload-success');
     const announcementForm = document.getElementById('announcementForm');
     const docList = document.getElementById('docList');
-    const searchInput = document.getElementById('searchInput'); 
+    const searchInput = document.getElementById('searchInput');
+    let announcementsOffset = 0;
+    const announcementsLimit = 10; // Tải 10 thông báo mỗi lần
+    let totalAnnouncements = 0;
+    let isLoadingAnnouncements = false;
 
     // --- Chat Elements ---
     const chatMessages = document.getElementById('chatMessages');
@@ -210,9 +214,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ANNOUNCEMENT FUNCTIONS ---
     // =================================================================
 
-    function renderAnnouncements(announcements) {
-        docList.innerHTML = '';
-        if (announcements.length === 0) {
+    function renderAnnouncements(announcements, append = false) {
+        if (!append) {
+            docList.innerHTML = '';
+        }
+
+        if (announcements.length === 0 && !append) {
             docList.innerHTML = '<p>Chưa có thông báo nào.</p>';
             return;
         }
@@ -221,7 +228,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const itemDiv = document.createElement('div');
             itemDiv.classList.add('doc-item');
 
-            // Title is now just bold text, not a link
             const titleHeader = document.createElement('h5');
             titleHeader.classList.add('doc-title');
             titleHeader.innerHTML = `<strong>${doc.title}</strong>`;
@@ -235,7 +241,6 @@ document.addEventListener('DOMContentLoaded', function() {
             itemDiv.appendChild(titleHeader);
             itemDiv.appendChild(metadata);
 
-            // Add content if it exists
             if (doc.content && doc.content.trim() !== '') {
                 const contentP = document.createElement('p');
                 contentP.classList.add('doc-content');
@@ -243,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 itemDiv.appendChild(contentP);
             }
 
-            // Add attachment links at the bottom if files exist
             if (doc.files && doc.files.length > 0) {
                 const attachmentContainer = document.createElement('div');
                 attachmentContainer.classList.add('doc-attachment-container');
@@ -274,14 +278,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function loadAnnouncements() {
+    async function loadAnnouncements(isInitialLoad = false) {
+        if (isLoadingAnnouncements) return;
+        if (!isInitialLoad && announcementsOffset >= totalAnnouncements && totalAnnouncements > 0) {
+            return; 
+        }
+
+        isLoadingAnnouncements = true;
+        if(isInitialLoad) {
+            announcementsOffset = 0;
+            docList.innerHTML = '<p>Đang tải danh sách thông báo...</p>';
+        }
+
         try {
-            const response = await fetch('/api/get_announcements');
-            const announcements = await response.json();
-            renderAnnouncements(announcements);
+            const response = await fetch(`/api/get_announcements?offset=${announcementsOffset}&limit=${announcementsLimit}`);
+            const data = await response.json();
+            
+            if (isInitialLoad) {
+                totalAnnouncements = data.total;
+                renderAnnouncements(data.announcements);
+            } else {
+                renderAnnouncements(data.announcements, true);
+            }
+
+            announcementsOffset += data.announcements.length;
+
         } catch (error) {
             console.error('Error loading announcements:', error);
-            docList.innerHTML = '<p>Lỗi khi tải danh sách thông báo.</p>';
+            if (isInitialLoad) {
+                docList.innerHTML = '<p>Lỗi khi tải danh sách thông báo.</p>';
+            }
+        } finally {
+            isLoadingAnnouncements = false;
         }
     }
     
@@ -305,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok && data.success) {
                 uploadSuccess.textContent = data.message || 'Tạo thông báo thành công!';
                 uploadSuccess.style.display = 'block';
-                loadAnnouncements(); // Reload the list
+                loadAnnouncements(true); // Tải lại từ đầu
                 setTimeout(() => addAnnouncementModal.modal('hide'), 1500);
             } else {
                 uploadError.textContent = data.message || 'Tạo thông báo thất bại.';
@@ -315,6 +343,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Announcement submission failed:', error);
             uploadError.textContent = 'Đã xảy ra lỗi. Vui lòng thử lại.';
             uploadError.style.display = 'block';
+        }
+    });
+
+    docList.addEventListener('scroll', () => {
+        // Gần đến cuối (ví dụ: 100px) thì tải thêm
+        if (docList.scrollTop + docList.clientHeight >= docList.scrollHeight - 100) {
+            loadAnnouncements();
         }
     });
 
@@ -355,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Load initial data and start polling
-        loadAnnouncements();
+        loadAnnouncements(true); // Tải lần đầu
         loadChatMessages();
         if (chatPollInterval) clearInterval(chatPollInterval);
         chatPollInterval = setInterval(loadChatMessages, 5000); // Poll every 5 seconds
