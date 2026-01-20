@@ -9,3 +9,6 @@ __pycache__/
 
 # Uploads
 uploads/
+
+# Config
+config.py

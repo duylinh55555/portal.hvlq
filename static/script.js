@@ -106,6 +106,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginSubmitButton = document.getElementById('loginSubmit');
     const loginError = document.getElementById('login-error');
 
+    // --- Guest Name Elements ---
+    const guestNameModal = $('#guestNameModal');
+    const saveGuestNameButton = document.getElementById('saveGuestName');
+    const guestNameInput = document.getElementById('guestName');
+    let pendingMessage = ''; 
+    let shouldPromptForName = false;
+
     // --- Announcement Elements ---
     const addAnnouncementModal = $('#addAnnouncementModal');
     const submitAnnouncementButton = document.getElementById('submitAnnouncement');
@@ -183,29 +190,67 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    async function sendMessage(message) {
+        if (!message) return;
+        try {
+            const response = await fetch('/api/chat/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message }),
+            });
+
+            if (response.ok) {
+                chatInput.value = '';
+                loadChatMessages();
+            } else {
+                const errorData = await response.json();
+                alert(`Lỗi: ${errorData.message}`);
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            alert('Không thể gửi tin nhắn. Vui lòng thử lại.');
+        }
+    }
+
     chatForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         const message = chatInput.value.trim();
-
         if (message) {
-            try {
-                const response = await fetch('/api/chat/messages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message }),
-                });
-
-                if (response.ok) {
-                    chatInput.value = ''; // Clear input
-                    loadChatMessages(); // Reload messages immediately
-                } else {
-                    const errorData = await response.json();
-                    alert(`Lỗi: ${errorData.message}`);
-                }
-            } catch (error) {
-                console.error('Error sending message:', error);
-                alert('Không thể gửi tin nhắn. Vui lòng thử lại.');
+            if (shouldPromptForName) {
+                pendingMessage = message;
+                guestNameModal.modal('show');
+            } else {
+                sendMessage(message);
             }
+        }
+    });
+
+    saveGuestNameButton.addEventListener('click', async function() {
+        const guestName = guestNameInput.value.trim();
+        if (!guestName) {
+            alert('Vui lòng nhập tên của bạn.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/set_guest_name', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: guestName }),
+            });
+            const data = await response.json();
+            if (response.ok && data.success) {
+                shouldPromptForName = false;
+                currentUser = data.user; // Cập nhật người dùng hiện tại
+                updateUI(false, data.user);
+                guestNameModal.modal('hide');
+                sendMessage(pendingMessage); // Gửi tin nhắn đang chờ
+                pendingMessage = '';
+            } else {
+                alert(data.message || 'Lưu tên thất bại.');
+            }
+        } catch (error) {
+            alert('Đã xảy ra lỗi khi lưu tên.');
         }
     });
 
@@ -362,21 +407,28 @@ document.addEventListener('DOMContentLoaded', function() {
         currentUser = user;
         const userStatusDiv = document.getElementById('user-status');
         
-        chatInput.disabled = false; // Luôn cho phép chat
+        chatInput.disabled = false;
 
         if (loggedIn) {
             logoutButton.style.display = 'inline-block';
             loginLink.style.display = 'none';
-            chatInput.placeholder = `Nhập tin nhắn (với tư cách ${user.name})...`;
+            chatInput.placeholder = `Nhập tin nhắn...`;
             if (userStatusDiv) {
                 userStatusDiv.textContent = `Xin chào, ${user.name}`;
             }
-        } else {
+        } else { // Là khách
             logoutButton.style.display = 'none';
             loginLink.style.display = 'inline-block';
-            chatInput.placeholder = `Nhập tin nhắn (với tư cách ${user.name})...`;
-            if (userStatusDiv) {
-                userStatusDiv.textContent = `Bạn là Khách (${user.name})`;
+            if (shouldPromptForName) {
+                 chatInput.placeholder = 'Nhập tin nhắn và nhấn gửi để đặt tên...';
+                 if (userStatusDiv) {
+                    userStatusDiv.textContent = `Bạn là Khách (chưa đặt tên)`;
+                }
+            } else {
+                chatInput.placeholder = `Nhập tin nhắn (với tư cách ${user.name})...`;
+                 if (userStatusDiv) {
+                    userStatusDiv.textContent = `Bạn là Khách (${user.name})`;
+                }
             }
         }
     }
@@ -385,6 +437,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch('/api/check_auth');
             const data = await response.json();
+            
+            shouldPromptForName = data.prompt_for_name || false;
+            
             updateUI(data.logged_in, data.user);
         } catch (error) {
             console.error('Error checking auth status:', error);

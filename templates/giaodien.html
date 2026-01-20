@@ -38,8 +38,19 @@
           <div class="header-right-column ml-auto">
             <div class="user-info-line">
               <div id="user-status" class="user-status"></div>
-              <a href="#" id="login-link" class="login-link" style="display: none; margin-left: 10px;">(Đăng nhập)</a>
-              <a href="#" class="logout-link btn-logout" style="display: none; margin-left: 10px;">Đăng xuất</a>
+              <a
+                href="#"
+                id="login-link"
+                class="login-link"
+                style="display: none; margin-left: 10px"
+                >(Đăng nhập)</a
+              >
+              <a
+                href="#"
+                class="logout-link btn-logout"
+                style="display: none; margin-left: 10px"
+                >Đăng xuất</a
+              >
             </div>
             <div
               id="currentDateTime"
@@ -152,7 +163,7 @@
                 rel="noopener noreferrer"
               >
                 <img
-                  src="{{ url_for('static', filename='img/logo/logo.png') }}"
+                  src="{{ url_for('static', filename='img/logo/edu-management.png') }}"
                   alt="TIN TỨC, KHQS"
                   class="item-icon"
                 />
@@ -225,6 +236,19 @@
                 />
                 ANH VĂN, <br />
                 THI TRẮC NGHIỆM
+              </a>
+              <a
+                href="http://chat.hvlq.bqp"
+                class="item-link link-update"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="{{ url_for('static', filename='img/logo/chat.png') }}"
+                  alt="ROCKET CHAT"
+                  class="item-icon"
+                />
+                ROCKET CHAT
               </a>
             </div>
           </div>
@@ -348,6 +372,18 @@
                   >Trò chuyện trực tuyến</a
                 >
               </li>
+              <li class="nav-item" role="presentation">
+                <a
+                  class="nav-link"
+                  id="nas-tab"
+                  data-toggle="tab"
+                  href="#nas"
+                  role="tab"
+                  aria-controls="nas"
+                  aria-selected="false"
+                  >Tệp NAS</a
+                >
+              </li>
             </ul>
             <div class="tab-content" id="myTabContent">
               <div
@@ -398,6 +434,32 @@
                     />
                     <button type="submit" class="btn btn-primary">Gửi</button>
                   </form>
+                </div>
+              </div>
+              <div
+                class="tab-pane fade"
+                id="nas"
+                role="tabpanel"
+                aria-labelledby="nas-tab"
+              >
+                <div class="nas-container">
+                    <h4>Kho lưu trữ đám mây (NAS)</h4>
+                    <form id="nasUploadForm" class="mb-3">
+                        <div class="form-group">
+                            <label for="nasFile">Tải tệp lên NAS:</label>
+                            <input type="file" class="form-control-file" id="nasFile" name="file" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Tải lên</button>
+                    </form>
+                    <div id="nas-upload-status" class="mt-2"></div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5>Tệp hiện có trên NAS</h5>
+                        <button id="refreshNasFiles" class="btn btn-sm btn-secondary">Làm mới</button>
+                    </div>
+                    <ul id="nas-file-list" class="list-group">
+                        <p>Đang tải danh sách tệp...</p>
+                    </ul>
                 </div>
               </div>
             </div>
@@ -560,6 +622,60 @@
       </div>
     </div>
 
+    <!-- Guest Name Modal -->
+    <div
+      class="modal fade"
+      id="guestNameModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="guestNameModalLabel"
+      aria-hidden="true"
+      data-backdrop="static"
+      data-keyboard="false"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="guestNameModalLabel">
+              Tên của đồng chí là?
+            </h5>
+          </div>
+          <div class="modal-body">
+            <form id="guestNameForm">
+              <div class="form-group">
+                <label for="guestName">Tên hiển thị</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="guestName"
+                  name="guestName"
+                  required
+                  autocomplete="off"
+                />
+              </div>
+              <p class="text-muted" style="font-size: 0.9rem">
+                Trò chuyện văn hóa, lịch sự.
+              </p>
+            </form>
+          </div>
+          <div
+            class="modal-footer d-flex justify-content-between align-items-center"
+          >
+            <p
+              class="mb-0"
+              id="text-muted"
+              style="font-style: italic; font-size: 0.8rem; color: #6c757d"
+            >
+              Lịch sử kết nối sẽ được lưu trữ.
+            </p>
+            <button type="button" class="btn btn-primary" id="saveGuestName">
+              Lưu và Gửi
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <footer class="main-footer">
       <div class="container-fluid">
         <div></div>
@@ -582,5 +698,105 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+      // Wait for the document to be fully loaded
+      document.addEventListener('DOMContentLoaded', function() {
+        
+        const nasTab = document.getElementById('nas-tab');
+        const nasFileList = document.getElementById('nas-file-list');
+        const nasUploadForm = document.getElementById('nasUploadForm');
+        const nasUploadStatus = document.getElementById('nas-upload-status');
+        const refreshNasFilesBtn = document.getElementById('refreshNasFiles');
+
+        // Function to load files from NAS
+        async function loadNasFiles() {
+          nasFileList.innerHTML = '<p>Đang tải, vui lòng chờ...</p>';
+          try {
+            const response = await fetch('/api/nas/files');
+            const data = await response.json();
+
+            if (data.success) {
+              nasFileList.innerHTML = ''; // Clear current list
+              if (data.files.length === 0) {
+                nasFileList.innerHTML = '<p>Chưa có tệp nào trên NAS.</p>';
+              } else {
+                data.files.forEach(filename => {
+                  const li = document.createElement('li');
+                  li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                  
+                  const fileNameSpan = document.createElement('span');
+                  fileNameSpan.textContent = filename;
+                  
+                  const downloadLink = document.createElement('a');
+                  downloadLink.href = `/api/nas/download/${filename}`;
+                  downloadLink.className = 'btn btn-sm btn-success';
+                  downloadLink.textContent = 'Tải xuống';
+                  
+                  li.appendChild(fileNameSpan);
+                  li.appendChild(downloadLink);
+                  nasFileList.appendChild(li);
+                });
+              }
+            } else {
+              nasFileList.innerHTML = `<p class="text-danger">Lỗi: ${data.message}</p>`;
+            }
+          } catch (error) {
+            console.error('Error fetching NAS files:', error);
+            nasFileList.innerHTML = '<p class="text-danger">Không thể kết nối đến máy chủ để lấy danh sách tệp.</p>';
+          }
+        }
+
+        // Event listener for NAS tab click
+        if (nasTab) {
+          nasTab.addEventListener('shown.bs.tab', function(event) {
+            loadNasFiles();
+          });
+        }
+        
+        // Event listener for refresh button
+        if(refreshNasFilesBtn) {
+            refreshNasFilesBtn.addEventListener('click', loadNasFiles);
+        }
+
+        // Event listener for NAS upload form
+        if (nasUploadForm) {
+          nasUploadForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('nasFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+              nasUploadStatus.innerHTML = '<div class="alert alert-warning">Vui lòng chọn một tệp.</div>';
+              return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            nasUploadStatus.innerHTML = '<div class="alert alert-info">Đang tải lên...</div>';
+
+            try {
+              const response = await fetch('/api/nas/upload', {
+                method: 'POST',
+                body: formData
+              });
+              const data = await response.json();
+
+              if (data.success) {
+                nasUploadStatus.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                loadNasFiles(); // Refresh file list after successful upload
+                nasUploadForm.reset(); // Clear the form
+              } else {
+                nasUploadStatus.innerHTML = `<div class="alert alert-danger">Lỗi: ${data.message}</div>`;
+              }
+            } catch (error) {
+              console.error('Error uploading to NAS:', error);
+              nasUploadStatus.innerHTML = '<div class="alert alert-danger">Lỗi kết nối khi tải tệp lên NAS.</div>';
+            }
+          });
+        }
+
+      });
+    </script>
   </body>
 </html>
