@@ -84,7 +84,16 @@ def api_logout():
 def api_check_auth():
     if 'user' in session:
         return jsonify({"logged_in": True, "user": session['user']})
-    return jsonify({"logged_in": False})
+    
+    # Đối với người dùng ẩn danh, trả về địa chỉ IP
+    user_ip = request.remote_addr
+    return jsonify({
+        "logged_in": False,
+        "user": {
+            "username": user_ip,
+            "name": user_ip
+        }
+    })
 
 @app.route('/api/get_announcements')
 def get_announcements():
@@ -197,27 +206,31 @@ def create_announcement():
 
 @app.route('/api/chat/messages', methods=['GET', 'POST'])
 def handle_chat_messages():
-    """Lấy hoặc gửi tin nhắn chat."""
-    # Đảm bảo file chat tồn tại
+    """Lấy hoặc gửi tin nhắn chat. Cho phép người dùng ẩn danh (sử dụng IP)."""
     if not os.path.exists(CHAT_HISTORY_FILE):
         with open(CHAT_HISTORY_FILE, 'w') as f:
             json.dump([], f)
 
     if request.method == 'POST':
-        # Chỉ người dùng đã đăng nhập mới được gửi tin nhắn
-        if "user" not in session:
-            return jsonify({"success": False, "message": "Authentication required"}), 401
-        
         data = request.get_json()
         if not data or 'message' not in data or not data['message'].strip():
             return jsonify({"success": False, "message": "Tin nhắn không được rỗng."}), 400
 
         message_text = data['message'].strip()
         
+        user_ip = request.remote_addr
+        
+        if "user" in session:
+            username = session['user']['username']
+            display_name = session['user']['name']
+        else:
+            username = user_ip
+            display_name = user_ip
+
         new_message = {
-            "id": int(datetime.utcnow().timestamp() * 1000), # Dùng timestamp cho ID
-            "username": session['user']['username'],
-            "name": session['user']['name'],
+            "id": int(datetime.utcnow().timestamp() * 1000),
+            "username": username,
+            "name": display_name,
             "message": message_text,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
@@ -233,7 +246,7 @@ def handle_chat_messages():
 
         return jsonify({"success": True, "message": new_message})
 
-    else: # GET request
+    else:  # GET request
         with open(CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
             try:
                 history = json.load(f)
