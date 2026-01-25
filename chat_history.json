@@ -101,5 +101,14 @@
         "name": "me",
         "message": "fg",
         "timestamp": "2026-01-20T14:07:17.565134Z"
+    },
+    {
+        "id": 1769309604096,
+        "username": "127.0.0.1",
+        "name": "hfds",
+        "message": "dfgd",
+        "ip_address": "127.0.0.1",
+        "mac_address": "localhost",
+        "timestamp": "2026-01-25T09:53:24.096986Z"
     }
 ]

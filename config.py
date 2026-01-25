@@ -14,5 +14,12 @@ NAS_PORT = int(os.environ.get('NAS_PORT', 22))  # Default SFTP port is 22
 # This often starts with '/volume1/' or similar. Please verify the correct path on your NAS.
 REMOTE_PATH = os.environ.get('REMOTE_PATH', '/volume1/Portal') # The absolute path on the NAS
 
+# --- Synology NAS Admin Credentials for User Creation ---
+# WARNING: Storing admin credentials directly in the code is a security risk.
+# For production, it is strongly recommended to use environment variables
+# or a secure vault for these credentials.
+NAS_ADMIN_USER = os.environ.get('NAS_ADMIN_USER', 'nas_admin')
+NAS_ADMIN_PASSWORD = os.environ.get('NAS_ADMIN_PASSWORD', 'nas_password')
+
 
 # Add any other configuration variables your application might need below.

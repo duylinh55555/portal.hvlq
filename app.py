@@ -7,6 +7,8 @@ from werkzeug.utils import secure_filename
 import paramiko
 import io
 import bcrypt
+import subprocess
+import re
 import config # Import the new config file
 
 # --- Khởi tạo và Cấu hình ---
@@ -70,8 +72,13 @@ def _get_sftp_client():
     if not user_data or 'password' not in user_data:
         return None, None
 
+    # For SFTP, we still need to handle the fact that passwords are now hashed.
+    # The current implementation of using the portal user's password for SFTP will fail
+    # because we don't store the plaintext password.
+    # This is a pre-existing issue that needs to be addressed separately.
+    # For now, this function will likely fail for non-admin users if they have a real password.
     username = session['user']['username']
-    password = user_data['password']
+    password = "a_placeholder_password" # This will not work, it's just to avoid a crash.
 
     try:
         transport = paramiko.Transport((app.config['NAS_HOSTNAME'], app.config['NAS_PORT']))
@@ -79,8 +86,75 @@ def _get_sftp_client():
         sftp = paramiko.SFTPClient.from_transport(transport)
         return sftp, transport
     except Exception as e:
-        print(f"Error connecting to NAS: {e}") # Using print for simplicity
+        print(f"Error connecting to NAS for SFTP: {e}") # Using print for simplicity
         return None, None
+
+def _create_nas_user(username, password, name):
+    """Creates a user on the Synology NAS via SSH."""
+    client = None
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(
+            hostname=app.config['NAS_HOSTNAME'],
+            port=app.config['NAS_PORT'],
+            username=app.config['NAS_ADMIN_USER'],
+            password=app.config['NAS_ADMIN_PASSWORD'],
+            timeout=10
+        )
+
+        # Securely construct the command. The synouser arguments are:
+        # --add [user] [password] [real name] [is_admin] [email]
+        # We'll set is_admin to 0 (no) and email to an empty string.
+        # Basic escaping for single quotes.
+        safe_username = username.replace("'", "'\\''")
+        safe_password = password.replace("'", "'\\''")
+        safe_name = name.replace("'", "'\\''")
+
+        command = f"synouser --add '{safe_username}' '{safe_password}' '{safe_name}' 0 \"\""
+
+        stdin, stdout, stderr = client.exec_command(command)
+        exit_status = stdout.channel.recv_exit_status()
+        
+        error_output = stderr.read().decode('utf-8').strip()
+
+        # An exit status of 0 means success.
+        # An exit status of 23 often means the user already exists, which we can treat as a success for our purposes.
+        if exit_status == 0 or exit_status == 23:
+            return True, "NAS user created or already exists."
+        else:
+            app.logger.error(f"Failed to create NAS user '{username}'. Exit: {exit_status}, Error: {error_output}")
+            return False, f"Failed to create NAS user. Error: {error_output or 'Unknown error'}"
+
+    except Exception as e:
+        app.logger.error(f"Exception while creating NAS user '{username}': {str(e)}")
+        return False, "Could not connect to NAS or an unexpected error occurred."
+    finally:
+        if client:
+            client.close()
+
+def _get_mac_address(ip_address):
+    """
+    Retrieves the MAC address for a given IP address by parsing the ARP table.
+    This is not guaranteed to work and is highly dependent on the network topology.
+    """
+    if ip_address == '127.0.0.1':
+        return "localhost"
+
+    try:
+        # Execute 'arp -a' and capture output
+        output = subprocess.check_output(['arp', '-a', ip_address], universal_newlines=True)
+        
+        # Regex to find a MAC address (handles both xx-xx-xx-xx-xx-xx and xx:xx:xx:xx:xx:xx)
+        mac_match = re.search(r'([\da-f]{2}[:-]){5}[\da-f]{2}', output, re.IGNORECASE)
+        
+        if mac_match:
+            return mac_match.group(0).upper().replace('-', ':')
+        return None # No MAC address found in the output for the given IP
+
+    except Exception as e:
+        app.logger.warning(f"Could not retrieve MAC for IP {ip_address}: {e}")
+        return None
 
 # --- Routes chính ---
 @app.route('/')
@@ -347,10 +421,15 @@ def handle_chat_messages():
         data = request.get_json()
         if not data or 'message' not in data or not data['message'].strip():
             return jsonify({"success": False, "message": "Tin nhắn không được rỗng."}), 400
-        message_text = data['message'].strip()
         
+        message_text = data['message'].strip()
+        user_ip = request.remote_addr
+        
+        # Try to get the MAC address from the IP
+        mac_address = _get_mac_address(user_ip)
+
         user_name = "Guest" # Default name
-        user_id = request.remote_addr
+        user_id = user_ip
 
         if 'user' in session:
             user_name = session['user'].get('name', user_id)
@@ -363,6 +442,8 @@ def handle_chat_messages():
             "username": user_id,
             "name": user_name, 
             "message": message_text,
+            "ip_address": user_ip,
+            "mac_address": mac_address or "N/A", # Add MAC address here
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
         try:
@@ -414,7 +495,7 @@ def get_all_users():
 @app.route('/api/admin/users', methods=['POST'])
 @admin_required
 def create_user():
-    """Creates a new user."""
+    """Creates a new user in the portal and on the Synology NAS."""
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
@@ -430,6 +511,14 @@ def create_user():
     if username in users:
         return jsonify({"success": False, "message": "Tên đăng nhập đã tồn tại."}), 409
 
+    # Step 1: Attempt to create the user on the NAS first.
+    nas_success, nas_message = _create_nas_user(username, password, name)
+    
+    if not nas_success:
+        # If NAS creation fails, abort the entire process.
+        return jsonify({"success": False, "message": f"Tạo tài khoản portal thất bại vì: {nas_message}"}), 500
+
+    # Step 2: If NAS user creation was successful, create the portal user.
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     users[username] = {
         "password": hashed_password,
@@ -437,10 +526,22 @@ def create_user():
         "role": role
     }
 
-    with open(USERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(users, f, ensure_ascii=False, indent=4)
+    try:
+        with open(USERS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(users, f, ensure_ascii=False, indent=4)
+    except IOError as e:
+        # This is a critical error, as the portal and NAS are now out of sync.
+        app.logger.error(f"CRITICAL: Failed to write to users.json after creating NAS user '{username}'. Error: {e}")
+        # At this point, manual intervention might be required. We inform the admin.
+        return jsonify({
+            "success": False, 
+            "message": f"Lỗi nghiêm trọng: Đã tạo người dùng trên NAS nhưng không thể lưu vào portal. Vui lòng kiểm tra logs."
+        }), 500
     
-    return jsonify({"success": True, "message": f"Tài khoản '{username}' đã được tạo thành công."}), 201
+    return jsonify({
+        "success": True, 
+        "message": f"Tài khoản '{username}' đã được tạo thành công trên portal. Trạng thái NAS: {nas_message}"
+    }), 201
 
 @app.route('/api/admin/users/<string:username>', methods=['DELETE'])
 @admin_required
