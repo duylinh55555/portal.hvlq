@@ -17,11 +17,7 @@ app.config.from_object('config')
 # Cấu hình khóa bí mật
 app.secret_key = os.urandom(24)
 
-# Cấu hình thư mục upload cục bộ (vẫn cần cho các chức năng không liên quan NAS)
-UPLOAD_FOLDER = 'uploads'
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 
 # Cấu hình file lưu trữ thông báo
 ANNOUNCEMENTS_FILE = 'announcements.json'
@@ -54,15 +50,35 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def _get_sftp_client():
+    """Establishes an SFTP connection using the logged-in user's credentials."""
+    if 'user' not in session or 'username' not in session['user']:
+        return None, None
+
+    users = load_users()
+    user_data = users.get(session['user']['username'])
+    
+    if not user_data or 'password' not in user_data:
+        return None, None
+
+    username = session['user']['username']
+    password = user_data['password']
+
+    try:
+        transport = paramiko.Transport((app.config['NAS_HOSTNAME'], app.config['NAS_PORT']))
+        transport.connect(username=username, password=password)
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        return sftp, transport
+    except Exception as e:
+        print(f"Error connecting to NAS: {e}") # Using print for simplicity
+        return None, None
+
 # --- Routes chính ---
 @app.route('/')
 def index():
     return render_template('giaodien.html')
 
-@app.route('/uploads/<path:filename>')
-def uploaded_file(filename):
-    """Phục vụ file đã được tải lên thư mục 'uploads' cục bộ."""
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+
 
 # --- API Endpoints ---
 @app.route('/api/login', methods=['POST'])
@@ -236,14 +252,31 @@ def create_announcement():
     content = request.form.get('content', '').strip()
     files = request.files.getlist('file')
     filenames = []
-    
-    # Lưu file vào thư mục uploads cục bộ
-    for file in files:
-        if file and file.filename:
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
-            filenames.append(filename)
+
+    # --- Start NAS Upload Logic ---
+    sftp, transport = None, None
+    if files: # Only connect if there are files
+        sftp, transport = _get_sftp_client()
+        if not sftp:
+            return jsonify({"success": False, "message": "Không thể kết nối đến máy chủ file để tải lên. Vui lòng kiểm tra lại thông tin đăng nhập và cấu hình NAS."}), 500
+
+    try:
+        for file in files:
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                
+                # Upload to NAS
+                remote_filepath = os.path.join(app.config['REMOTE_PATH'], filename).replace("\\\\", "/")
+                sftp.putfo(file, remote_filepath) # Use putfo to stream file obj
+                
+                filenames.append(filename)
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Lỗi khi tải file lên NAS: {e}"}), 500
+    finally:
+        # Make sure to close the connection
+        if sftp: sftp.close()
+        if transport: transport.close()
+    # --- End NAS Upload Logic ---
 
     try:
         announcements = []

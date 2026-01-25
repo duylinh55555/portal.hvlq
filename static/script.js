@@ -307,10 +307,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     attachmentItem.classList.add('doc-attachment-item');
 
                     const attachmentLink = document.createElement('a');
-                    attachmentLink.href = `/uploads/${file}`;
+                    attachmentLink.href = `/api/nas/download/${file}`;
                     attachmentLink.rel = 'noopener noreferrer';
                     attachmentLink.textContent = file;
-                    attachmentLink.download = file;
 
                     attachmentItem.appendChild(attachmentLink);
                     attachmentContainer.appendChild(attachmentItem);
