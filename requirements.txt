@@ -2,3 +2,4 @@ Flask
 Werkzeug
 paramiko
 gunicorn
+bcrypt

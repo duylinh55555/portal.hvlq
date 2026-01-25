@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title>Quản lý tài khoản - Cổng thông tin điện tử Học viện Lục quân</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='img/logo/logo.ico') }}" />
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Quản lý tài khoản</h1>
+            <a href="/" class="btn btn-secondary">Quay về trang chủ</a>
+        </div>
+
+        <!-- Add User Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Thêm tài khoản mới</h4>
+            </div>
+            <div class="card-body">
+                <form id="addUserForm">
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label for="newUsername">Tên đăng nhập</label>
+                            <input type="text" class="form-control" id="newUsername" required>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="newPassword">Mật khẩu</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="newName">Tên hiển thị</label>
+                            <input type="text" class="form-control" id="newName" required>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label for="newRole">Quyền</label>
+                            <select id="newRole" class="form-control">
+                                <option value="user" selected>Người dùng</option>
+                                <option value="admin">Quản trị viên</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary">Thêm</button>
+                        </div>
+                    </div>
+                </form>
+                <div id="form-message" class="mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Danh sách tài khoản</h4>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-bordered">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Tên đăng nhập</th>
+                            <th>Tên hiển thị</th>
+                            <th>Quyền</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userList">
+                        <!-- User data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const userList = $('#userList');
+            const formMessage = $('#form-message');
+
+            // Function to fetch and display users
+            async function loadUsers() {
+                try {
+                    const response = await fetch('/api/admin/users');
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message || 'Failed to fetch users.');
+                    }
+                    const users = await response.json();
+                    userList.empty(); // Clear existing list
+
+                    users.forEach(user => {
+                        const row = `
+                            <tr data-username="${user.username}">
+                                <td>${user.username}</td>
+                                <td>${user.name}</td>
+                                <td>
+                                    <select class="form-control role-select" ${user.username === 'admin' ? 'disabled' : ''}>
+                                        <option value="user" ${user.role === 'user' ? 'selected' : ''}>Người dùng</option>
+                                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Quản trị viên</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <button class="btn btn-danger btn-sm delete-btn" ${user.username === 'admin' ? 'disabled' : ''}>Xóa</button>
+                                </td>
+                            </tr>`;
+                        userList.append(row);
+                    });
+                } catch (error) {
+                    userList.html('<tr><td colspan="4" class="text-danger">Lỗi tải danh sách người dùng: ' + error.message + '</td></tr>');
+                }
+            }
+
+            // Add new user
+            $('#addUserForm').on('submit', async function(e) {
+                e.preventDefault();
+                const username = $('#newUsername').val();
+                const password = $('#newPassword').val();
+                const name = $('#newName').val();
+                const role = $('#newRole').val();
+
+                formMessage.empty().removeClass('alert alert-danger alert-success');
+
+                try {
+                    const response = await fetch('/api/admin/users', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password, name, role })
+                    });
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.message || 'An unknown error occurred.');
+                    }
+
+                    formMessage.addClass('alert alert-success').text(result.message);
+                    $('#addUserForm')[0].reset();
+                    loadUsers(); // Refresh the list
+                } catch (error) {
+                    formMessage.addClass('alert alert-danger').text('Lỗi: ' + error.message);
+                }
+            });
+
+            // Delete user
+            userList.on('click', '.delete-btn', async function() {
+                const row = $(this).closest('tr');
+                const username = row.data('username');
+                
+                if (confirm(`Bạn có chắc chắn muốn xóa tài khoản "${username}" không?`)) {
+                    try {
+                        const response = await fetch(`/api/admin/users/${username}`, {
+                            method: 'DELETE'
+                        });
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(result.message || 'Failed to delete user.');
+                        }
+                        
+                        alert(result.message);
+                        loadUsers(); // Refresh the list
+                    } catch (error) {
+                        alert('Lỗi: ' + error.message);
+                    }
+                }
+            });
+
+            // Change role
+            userList.on('change', '.role-select', async function() {
+                const row = $(this).closest('tr');
+                const username = row.data('username');
+                const newRole = $(this).val();
+
+                try {
+                    const response = await fetch(`/api/admin/users/${username}/role`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: newRole })
+                    });
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Failed to update role.');
+                    }
+                    
+                    alert(result.message);
+                    loadUsers(); // Refresh the list to confirm change
+                } catch (error) {
+                    alert('Lỗi: ' + error.message);
+                    loadUsers(); // Revert visual change on failure
+                }
+            });
+
+            // Initial load
+            loadUsers();
+        });
+    </script>
+</body>
+</html>

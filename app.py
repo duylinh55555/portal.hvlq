@@ -6,6 +6,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 import paramiko
 import io
+import bcrypt
 import config # Import the new config file
 
 # --- Khởi tạo và Cấu hình ---
@@ -50,6 +51,14 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user" not in session or session['user'].get('role') != 'admin':
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
 def _get_sftp_client():
     """Establishes an SFTP connection using the logged-in user's credentials."""
     if 'user' not in session or 'username' not in session['user']:
@@ -86,13 +95,18 @@ def api_login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    
+    if not username or not password:
+        return jsonify({"success": False, "message": "Tên đăng nhập và mật khẩu là bắt buộc."}), 400
+
     users = load_users()
     user_data = users.get(username)
 
-    if user_data and user_data.get('password') == password:
+    if user_data and bcrypt.checkpw(password.encode('utf-8'), user_data['password'].encode('utf-8')):
         session['user'] = {
             'username': username,
-            'name': user_data.get('name', username) 
+            'name': user_data.get('name', username),
+            'role': user_data.get('role', 'user')
         }
         return jsonify({"success": True, "message": "Đăng nhập thành công."})
     
@@ -111,20 +125,33 @@ def api_check_auth():
     
     user_ip = request.remote_addr
     
-    if 'user' not in session or session['user'].get('name') == user_ip:
-        guest_user = {
-            "username": user_ip,
-            "name": user_ip
-        }
-        return jsonify({
-            "logged_in": False,
-            "user": guest_user,
-            "prompt_for_name": True
-        })
+    # This logic seems to handle guest users, let's keep it but ensure it doesn't conflict.
+    guest_user = {
+        "username": user_ip,
+        "name": user_ip,
+        "role": "guest" 
+    }
     
+    if 'user' not in session:
+        # Check if a guest name was previously set in the session
+        guest_name = session.get('guest_name')
+        if guest_name:
+            guest_user['name'] = guest_name
+            return jsonify({
+                "logged_in": False,
+                "user": guest_user,
+                "prompt_for_name": False
+            })
+        else:
+             return jsonify({
+                "logged_in": False,
+                "user": guest_user,
+                "prompt_for_name": True
+            })
+
     return jsonify({
         "logged_in": False,
-        "user": session['user'],
+        "user": guest_user,
         "prompt_for_name": False
     })
     
@@ -134,12 +161,17 @@ def set_guest_name():
     name = data.get('name')
     if not name or not name.strip():
         return jsonify({"success": False, "message": "Tên không được rỗng."}), 400
-    if 'user' not in session:
-        session['user'] = {'username': request.remote_addr, 'name': name.strip()}
-    else:
-        session['user']['name'] = name.strip()
+    
+    # Store guest name separately to avoid confusion with logged-in users
+    session['guest_name'] = name.strip()
+    
+    guest_user = {
+        'username': request.remote_addr, 
+        'name': name.strip(),
+        'role': 'guest'
+    }
     session.modified = True
-    return jsonify({"success": True, "user": session['user']})
+    return jsonify({"success": True, "user": guest_user})
 
 # --- Synology NAS API Endpoints ---
 
@@ -243,7 +275,7 @@ def get_announcements():
     return jsonify({"announcements": paginated_announcements, "total": total_announcements})
 
 @app.route('/api/announcements', methods=['POST'])
-@login_required
+@admin_required
 def create_announcement():
     if 'title' not in request.form or not request.form['title'].strip():
         return jsonify({"success": False, "message": "Tiêu đề là bắt buộc."}), 400
@@ -255,7 +287,7 @@ def create_announcement():
 
     # --- Start NAS Upload Logic ---
     sftp, transport = None, None
-    if files: # Only connect if there are files
+    if files and any(f.filename for f in files): # Only connect if there are files with names
         sftp, transport = _get_sftp_client()
         if not sftp:
             return jsonify({"success": False, "message": "Không thể kết nối đến máy chủ file để tải lên. Vui lòng kiểm tra lại thông tin đăng nhập và cấu hình NAS."}), 500
@@ -266,11 +298,12 @@ def create_announcement():
                 filename = secure_filename(file.filename)
                 
                 # Upload to NAS
-                remote_filepath = os.path.join(app.config['REMOTE_PATH'], filename).replace("\\\\", "/")
+                remote_filepath = os.path.join(app.config['REMOTE_PATH'], filename).replace("\\", "/")
                 sftp.putfo(file, remote_filepath) # Use putfo to stream file obj
                 
                 filenames.append(filename)
     except Exception as e:
+        # Clean up already uploaded files if something goes wrong? Maybe for later.
         return jsonify({"success": False, "message": f"Lỗi khi tải file lên NAS: {e}"}), 500
     finally:
         # Make sure to close the connection
@@ -282,12 +315,16 @@ def create_announcement():
         announcements = []
         if os.path.exists(ANNOUNCEMENTS_FILE):
             with open(ANNOUNCEMENTS_FILE, 'r', encoding='utf-8') as f:
-                try: announcements = json.load(f)
-                except json.JSONDecodeError: pass
+                try: 
+                    announcements = json.load(f)
+                except json.JSONDecodeError: 
+                    pass
         
         new_announcement = {
-            "id": len(announcements) + 1,
-            "title": title, "content": content, "files": filenames,
+            "id": len(announcements) + 1 if announcements else 1,
+            "title": title, 
+            "content": content, 
+            "files": filenames,
             "author": session['user']['name'],
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
@@ -303,39 +340,149 @@ def create_announcement():
 @app.route('/api/chat/messages', methods=['GET', 'POST'])
 def handle_chat_messages():
     if not os.path.exists(CHAT_HISTORY_FILE):
-        with open(CHAT_HISTORY_FILE, 'w') as f: json.dump([], f)
+        with open(CHAT_HISTORY_FILE, 'w', encoding='utf-8') as f: 
+            json.dump([], f)
 
     if request.method == 'POST':
         data = request.get_json()
         if not data or 'message' not in data or not data['message'].strip():
             return jsonify({"success": False, "message": "Tin nhắn không được rỗng."}), 400
         message_text = data['message'].strip()
-        user_ip = request.remote_addr
-        if "user" in session:
-            username = session['user']['username']
-            display_name = session['user']['name']
-        else:
-            username = user_ip
-            display_name = user_ip
+        
+        user_name = "Guest" # Default name
+        user_id = request.remote_addr
+
+        if 'user' in session:
+            user_name = session['user'].get('name', user_id)
+            user_id = session['user'].get('username', user_id)
+        elif 'guest_name' in session:
+            user_name = session['guest_name']
+
         new_message = {
-            "id": int(datetime.utcnow().timestamp() * 1000), "username": username,
-            "name": display_name, "message": message_text,
+            "id": int(datetime.utcnow().timestamp() * 1000), 
+            "username": user_id,
+            "name": user_name, 
+            "message": message_text,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
         try:
-            with open(CHAT_HISTORY_FILE, 'r+', encoding='utf-8') as f:
-                history = json.load(f)
-                history.append(new_message)
-                f.seek(0)
+            history = []
+            if os.path.exists(CHAT_HISTORY_FILE):
+                with open(CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
+                    try:
+                        history = json.load(f)
+                    except json.JSONDecodeError:
+                        pass # Keep history as empty list
+            
+            history.append(new_message)
+            
+            with open(CHAT_HISTORY_FILE, 'w', encoding='utf-8') as f:
                 json.dump(history, f, ensure_ascii=False, indent=4)
+
         except (IOError, json.JSONDecodeError) as e:
             return jsonify({"success": False, "message": f"Lỗi khi lưu tin nhắn: {e}"}), 500
         return jsonify({"success": True, "message": new_message})
-    else:
-        with open(CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
-            try: history = json.load(f)
-            except json.JSONDecodeError: history = []
+    else: # GET request
+        history = []
+        if os.path.exists(CHAT_HISTORY_FILE):
+            with open(CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
+                try: 
+                    history = json.load(f)
+                except json.JSONDecodeError: 
+                    pass # Return empty list if file is corrupted
         return jsonify(history)
+
+# --- Admin Panel Routes ---
+@app.route('/admin')
+@admin_required
+def admin_panel():
+    """Serves the admin panel page."""
+    return render_template('admin.html')
+
+@app.route('/api/admin/users', methods=['GET'])
+@admin_required
+def get_all_users():
+    """Returns a list of all users."""
+    users = load_users()
+    # Convert user data to a list of dicts, omitting passwords
+    user_list = [
+        {"username": username, "name": data.get("name"), "role": data.get("role")}
+        for username, data in users.items()
+    ]
+    return jsonify(user_list)
+
+@app.route('/api/admin/users', methods=['POST'])
+@admin_required
+def create_user():
+    """Creates a new user."""
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    name = data.get('name')
+    role = data.get('role', 'user')
+
+    if not all([username, password, name]):
+        return jsonify({"success": False, "message": "Tên đăng nhập, mật khẩu và tên hiển thị là bắt buộc."}), 400
+    if role not in ['user', 'admin']:
+        return jsonify({"success": False, "message": "Quyền không hợp lệ."}), 400
+
+    users = load_users()
+    if username in users:
+        return jsonify({"success": False, "message": "Tên đăng nhập đã tồn tại."}), 409
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    users[username] = {
+        "password": hashed_password,
+        "name": name,
+        "role": role
+    }
+
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users, f, ensure_ascii=False, indent=4)
+    
+    return jsonify({"success": True, "message": f"Tài khoản '{username}' đã được tạo thành công."}), 201
+
+@app.route('/api/admin/users/<string:username>', methods=['DELETE'])
+@admin_required
+def delete_user(username):
+    """Deletes a user."""
+    if username == 'admin':
+        return jsonify({"success": False, "message": "Không thể xóa tài khoản quản trị viên chính."}), 403
+
+    users = load_users()
+    if username not in users:
+        return jsonify({"success": False, "message": "Tài khoản không tồn tại."}), 404
+
+    del users[username]
+
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users, f, ensure_ascii=False, indent=4)
+        
+    return jsonify({"success": True, "message": f"Tài khoản '{username}' đã được xóa."})
+
+@app.route('/api/admin/users/<string:username>/role', methods=['PUT'])
+@admin_required
+def update_user_role(username):
+    """Updates a user's role."""
+    data = request.get_json()
+    new_role = data.get('role')
+
+    if not new_role or new_role not in ['user', 'admin']:
+        return jsonify({"success": False, "message": "Quyền không hợp lệ."}), 400
+
+    if username == 'admin' and new_role == 'user':
+        return jsonify({"success": False, "message": "Không thể thay đổi quyền của quản trị viên chính."}), 403
+
+    users = load_users()
+    if username not in users:
+        return jsonify({"success": False, "message": "Tài khoản không tồn tại."}), 404
+
+    users[username]['role'] = new_role
+
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users, f, ensure_ascii=False, indent=4)
+
+    return jsonify({"success": True, "message": f"Quyền của tài khoản '{username}' đã được cập nhật."})
 
 # --- Chạy ứng dụng ---
 if __name__ == '__main__':

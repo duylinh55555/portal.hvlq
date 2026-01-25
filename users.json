@@ -1,14 +1,17 @@
 {
     "admin": {
-        "password": "password123",
-        "name": "Quản trị viên"
+        "password": "$2b$12$UmUypO0aWrIQygcRxke71uES5HexNZ/eRjvOUWRJIzVL.9jI2q6aK",
+        "name": "Quản trị viên",
+        "role": "admin"
     },
     "user": {
-        "password": "123",
-        "name": "Người dùng"
+        "password": "$2b$12$i6nSB1eBB4e6C8VAYi8giusQ9mBdbBeel4IGqCy72JkOKOKdLHD7C",
+        "name": "Người dùng",
+        "role": "user"
     },
     "phongct": {
-        "password": "123",
-        "name": "Phòng Chính trị"
+        "password": "$2b$12$65ppl833EveDJH0Zx06W/u0v3aiSUdvaQjlbBbcqIeKkWzD187pIW",
+        "name": "Phòng Chính trị",
+        "role": "user"
     }
 }

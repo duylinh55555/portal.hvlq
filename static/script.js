@@ -404,26 +404,37 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateUI(loggedIn, user = null) {
         isLoggedIn = loggedIn;
         currentUser = user;
-        const userStatusDiv = document.getElementById('user-status');
         
+        const userStatusDiv = document.getElementById('user-status');
+        const adminPanelLink = document.getElementById('admin-panel-link');
+        const addNewButton = document.querySelector('.btn-add-new');
+
+        // Reset all controls first
+        logoutButton.style.display = 'none';
+        loginLink.style.display = 'none';
+        adminPanelLink.style.display = 'none';
+        addNewButton.style.display = 'none';
         chatInput.disabled = false;
 
         if (loggedIn) {
             logoutButton.style.display = 'inline-block';
-            loginLink.style.display = 'none';
             chatInput.placeholder = `Nhập tin nhắn...`;
             if (userStatusDiv) {
                 userStatusDiv.textContent = `Xin chào, ${user.name}`;
             }
-        } else { // Là khách
-            logoutButton.style.display = 'none';
+            // Show admin controls if the user is an admin
+            if (user && user.role === 'admin') {
+                adminPanelLink.style.display = 'inline-block';
+                addNewButton.style.display = 'inline-block';
+            }
+        } else { // Not logged in (guest)
             loginLink.style.display = 'inline-block';
             if (shouldPromptForName) {
                  chatInput.placeholder = 'Nhập tin nhắn và nhấn gửi để đặt tên...';
                  if (userStatusDiv) {
                     userStatusDiv.textContent = `Bạn là Khách (chưa đặt tên)`;
                 }
-            } else {
+            } else if (user) { // Guest with a name
                 chatInput.placeholder = `Nhập tin nhắn (với tư cách ${user.name})...`;
                  if (userStatusDiv) {
                     userStatusDiv.textContent = `Bạn là Khách (${user.name})`;
@@ -442,7 +453,8 @@ document.addEventListener('DOMContentLoaded', function() {
             updateUI(data.logged_in, data.user);
         } catch (error) {
             console.error('Error checking auth status:', error);
-            updateUI(false);
+            // Ensure UI is in a logged-out state on failure
+            updateUI(false, { name: 'Guest', role: 'guest' });
         }
         
         // Load initial data and start polling
@@ -453,6 +465,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     addNewButton.addEventListener('click', function() {
+        // The button is only visible for admins, so we just need to check for login status
         if (!isLoggedIn) {
             loginModal.modal('show');
         } else {
@@ -478,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok && data.success) {
                 loginModal.modal('hide');
                 document.getElementById('loginForm').reset();
-                checkAuthStatus(); // Re-check auth status to update UI and load data
+                await checkAuthStatus(); // Re-check auth status to update UI
             } else {
                 loginError.textContent = data.message || 'Đăng nhập không thành công.';
                 loginError.style.display = 'block';
@@ -494,7 +507,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch('/api/logout');
             if (response.ok) {
-                updateUI(false);
+                await checkAuthStatus(); // Re-check to update UI to guest state
             } else {
                 console.error('Logout failed.');
             }
