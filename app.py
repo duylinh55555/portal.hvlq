@@ -60,10 +60,9 @@ def index():
     return render_template('giaodien.html')
 
 @app.route('/uploads/<path:filename>')
-@login_required
 def uploaded_file(filename):
     """Phục vụ file đã được tải lên thư mục 'uploads' cục bộ."""
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 # --- API Endpoints ---
 @app.route('/api/login', methods=['POST'])

@@ -18,7 +18,7 @@
   </head>
 
   <body class="container-fluid" style="padding: 0">
-    <header class="main-header">
+    <header class="main-header" style="background-image: url('{{ url_for('static', filename='img/header_footer/header-right.jpg') }}');">
       <div class="container-fluid">
         <div class="d-flex align-items-center">
           <div class="header-logo">
@@ -111,7 +111,7 @@
                 MISTEN
               </a>
               <a
-                href="https://qlms.bqp"
+                href="http://qlms.bqp"
                 class="item-link link-update"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -369,7 +369,7 @@
                   role="tab"
                   aria-controls="chat"
                   aria-selected="false"
-                  >Trò chuyện trực tuyến</a
+                  >Trò chuyện</a
                 >
               </li>
               <li class="nav-item" role="presentation">
@@ -692,7 +692,7 @@
       </div>
     </div>
 
-    <footer class="main-footer">
+    <footer class="main-footer" style="background-image: url('{{ url_for('static', filename='img/header_footer/footer.webp') }}');">
       <div class="container-fluid">
         <div></div>
         <div class="footer-info">

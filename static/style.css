@@ -24,8 +24,10 @@ body {
   padding-right: 0 !important;
 }
 .main-header {
-  background-color: #007bff; /* Màu xanh dương của Bootstrap primary */
-  color: #fff;
+  background-size: auto 100%;
+  background-position: right;
+  background-repeat: no-repeat;
+  color: #333;
   padding: 15px 0;
   text-align: left;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -38,7 +40,9 @@ body {
   font-size: 16px;
 }
 .main-footer {
-  background-color: #343a40; /* Màu xám đậm của Bootstrap dark */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   color: #fff;
   padding: 15px 0;
   /* text-align: center; */ /* Bỏ thuộc tính này để dùng flexbox cho container */
@@ -188,7 +192,7 @@ body {
   margin-top: 5px;
   margin-bottom: 10px;
   font-size: 16px;
-  color: #f8f9fa;
+  color: #555;
 }
 
 .main-footer .container-fluid {
@@ -280,14 +284,14 @@ body {
 }
 
 .logout-link {
-  color: #d8d8d8;
+  color: #555;
   text-decoration: none;
   font-size: 0.9em;
 }
 
 .logout-link:hover {
   text-decoration: underline;
-  color: #fff;
+  color: #000;
 }
 
 /* --- Chat Bubble Styles --- */

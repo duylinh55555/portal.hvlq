@@ -308,9 +308,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const attachmentLink = document.createElement('a');
                     attachmentLink.href = `/uploads/${file}`;
-                    attachmentLink.target = '_blank';
                     attachmentLink.rel = 'noopener noreferrer';
                     attachmentLink.textContent = file;
+                    attachmentLink.download = file;
 
                     attachmentItem.appendChild(attachmentLink);
                     attachmentContainer.appendChild(attachmentItem);
