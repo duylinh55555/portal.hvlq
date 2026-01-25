@@ -203,7 +203,9 @@ def _get_mac_address(ip_address):
 # --- Routes chính ---
 @app.route('/')
 def index():
-    return render_template('giaodien.html')
+    # Pass server time in ISO format for easy parsing by JavaScript
+    initial_server_time_iso = datetime.now().isoformat()
+    return render_template('giaodien.html', initial_server_time_iso=initial_server_time_iso)
 
 
 

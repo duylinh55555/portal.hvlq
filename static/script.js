@@ -10,27 +10,45 @@ searchInput.addEventListener('keyup', function() {
   } 
 });
 
-// Hiển thị ngày giờ hiện tại
-function updateDateTime() {
-  const now = new Date();
-  const options = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  };
-  let dateTimeString = now.toLocaleString('vi-VN', options);
-    if (dateTimeString.startsWith('lúc ')) {
-        dateTimeString = dateTimeString.substring(4);
-    }
-  document.getElementById('currentDateTime').textContent = dateTimeString;
-}
+// Hiển thị ngày giờ hiện tại (đồng bộ với server, chạy real-time)
+function startLiveClock() {
+    const dateTimeElement = document.getElementById('currentDateTime');
+    // Lấy thời gian ISO từ data attribute
+    const initialTimeISO = dateTimeElement.getAttribute('data-initial-time');
+    
+    // Nếu không có thời gian từ server, không làm gì cả
+    if (!initialTimeISO) return;
 
-setInterval(updateDateTime, 1000); // Cập nhật mỗi giây
-updateDateTime(); // Gọi lần đầu để hiển thị ngay lập tức
+    // Tạo đối tượng Date từ chuỗi ISO
+    let serverTime = new Date(initialTimeISO);
+
+    // Mảng tên ngày bằng tiếng Việt
+    const daysMap = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+
+    function formatCurrentTime() {
+        const dayOfWeek = daysMap[serverTime.getDay()];
+        const day = String(serverTime.getDate()).padStart(2, '0');
+        const month = String(serverTime.getMonth() + 1).padStart(2, '0');
+        const year = serverTime.getFullYear();
+        const hours = String(serverTime.getHours()).padStart(2, '0');
+        const minutes = String(serverTime.getMinutes()).padStart(2, '0');
+        const seconds = String(serverTime.getSeconds()).padStart(2, '0');
+        
+        // Cập nhật nội dung của element
+        dateTimeElement.textContent = `${dayOfWeek}, ${day}/${month}/${year} - ${hours}:${minutes}:${seconds}`;
+    }
+
+    // Cập nhật đồng hồ mỗi giây
+    setInterval(() => {
+        // Tăng thời gian lên 1 giây
+        serverTime.setSeconds(serverTime.getSeconds() + 1);
+        formatCurrentTime();
+    }, 1000);
+
+    // Hiển thị thời gian ngay lần đầu
+    formatCurrentTime();
+}
+startLiveClock(); // Bắt đầu chạy đồng hồ
 
 // Bộ đếm lượt truy cập
 function updateVisitCounter() {
