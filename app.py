@@ -61,24 +61,17 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def _get_sftp_client():
+def _get_sftp_client(password=None):
     """Establishes an SFTP connection using the logged-in user's credentials."""
     if 'user' not in session or 'username' not in session['user']:
         return None, None
 
-    users = load_users()
-    user_data = users.get(session['user']['username'])
-    
-    if not user_data or 'password' not in user_data:
-        return None, None
-
-    # For SFTP, we still need to handle the fact that passwords are now hashed.
-    # The current implementation of using the portal user's password for SFTP will fail
-    # because we don't store the plaintext password.
-    # This is a pre-existing issue that needs to be addressed separately.
-    # For now, this function will likely fail for non-admin users if they have a real password.
     username = session['user']['username']
-    password = "a_placeholder_password" # This will not work, it's just to avoid a crash.
+    
+    # If a password is not provided, the connection will likely fail for non-admin users.
+    # This maintains the existing behavior for other parts of the app that call this function.
+    if not password:
+        return None, None # Or handle with a placeholder/error as before
 
     try:
         transport = paramiko.Transport((app.config['NAS_HOSTNAME'], app.config['NAS_PORT']))
@@ -86,7 +79,21 @@ def _get_sftp_client():
         sftp = paramiko.SFTPClient.from_transport(transport)
         return sftp, transport
     except Exception as e:
-        print(f"Error connecting to NAS for SFTP: {e}") # Using print for simplicity
+        app.logger.error(f"Error connecting to NAS for SFTP for user '{username}': {e}")
+        return None, None
+
+def _get_sftp_client_for_guest():
+    """Establishes an SFTP connection using dedicated guest credentials for public access."""
+    try:
+        transport = paramiko.Transport((app.config['NAS_HOSTNAME'], app.config['NAS_PORT']))
+        transport.connect(
+            username='user',
+            password=app.config['NAS_GUEST_PASSWORD']
+        )
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        return sftp, transport
+    except Exception as e:
+        app.logger.error(f"Error connecting to NAS for guest SFTP: {e}")
         return None, None
 
 def _create_nas_user(username, password, name):
@@ -128,6 +135,43 @@ def _create_nas_user(username, password, name):
 
     except Exception as e:
         app.logger.error(f"Exception while creating NAS user '{username}': {str(e)}")
+        return False, "Could not connect to NAS or an unexpected error occurred."
+    finally:
+        if client:
+            client.close()
+
+def _update_nas_user_password(username, new_password):
+    """Updates a user's password on the Synology NAS via SSH."""
+    client = None
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(
+            hostname=app.config['NAS_HOSTNAME'],
+            port=app.config['NAS_PORT'],
+            username=app.config['NAS_ADMIN_USER'],
+            password=app.config['NAS_ADMIN_PASSWORD'],
+            timeout=10
+        )
+
+        # Securely construct the command: synouser --setpw [user] [new_password]
+        safe_username = username.replace("'", "'\\''")
+        safe_password = new_password.replace("'", "'\\''")
+        
+        command = f"synouser --setpw '{safe_username}' '{safe_password}'"
+
+        stdin, stdout, stderr = client.exec_command(command)
+        exit_status = stdout.channel.recv_exit_status()
+        error_output = stderr.read().decode('utf-8').strip()
+
+        if exit_status == 0:
+            return True, "NAS user password updated successfully."
+        else:
+            app.logger.error(f"Failed to update NAS password for user '{username}'. Exit: {exit_status}, Error: {error_output}")
+            return False, f"Failed to update NAS user password. Error: {error_output or 'Unknown error'}"
+
+    except Exception as e:
+        app.logger.error(f"Exception while updating NAS password for '{username}': {str(e)}")
         return False, "Could not connect to NAS or an unexpected error occurred."
     finally:
         if client:
@@ -180,7 +224,8 @@ def api_login():
         session['user'] = {
             'username': username,
             'name': user_data.get('name', username),
-            'role': user_data.get('role', 'user')
+            'role': user_data.get('role', 'user'),
+            'password': password  # Store plain text password in session
         }
         return jsonify({"success": True, "message": "Đăng nhập thành công."})
     
@@ -330,6 +375,40 @@ def download_from_nas(filename):
         if sftp: sftp.close()
         if transport: transport.close()
 
+@app.route('/api/public/download/<path:filename>', methods=['GET'])
+def public_download_from_nas(filename):
+    """Tải tệp từ Synology NAS về máy khách (không cần đăng nhập)."""
+    sftp, transport = _get_sftp_client_for_guest()
+    if not sftp:
+        # Trả về lỗi 503 Service Unavailable thay vì 500 để rõ hơn
+        return "Dịch vụ tải xuống không có sẵn. Vui lòng thử lại sau.", 503
+        
+    try:
+        # Sanitize filename to prevent directory traversal attacks
+        safe_filename = secure_filename(filename)
+        if not safe_filename:
+            return "Tên tệp không hợp lệ.", 400
+
+        remote_filepath = os.path.join(app.config['REMOTE_PATH'], safe_filename).replace("\\", "/")
+        
+        file_obj = io.BytesIO()
+        sftp.getfo(remote_filepath, file_obj)
+        file_obj.seek(0)
+        
+        return send_file(
+            file_obj,
+            as_attachment=True,
+            download_name=safe_filename
+        )
+    except FileNotFoundError:
+        return "Tệp không tồn tại.", 404
+    except Exception as e:
+        app.logger.error(f"Public download error for '{filename}': {e}")
+        return "Đã xảy ra lỗi khi cố gắng tải tệp.", 500
+    finally:
+        if sftp: sftp.close()
+        if transport: transport.close()
+
 # --- API Endpoints cho Thông báo và Chat (giữ nguyên) ---
 
 @app.route('/api/get_announcements')
@@ -464,14 +543,87 @@ def handle_chat_messages():
             return jsonify({"success": False, "message": f"Lỗi khi lưu tin nhắn: {e}"}), 500
         return jsonify({"success": True, "message": new_message})
     else: # GET request
+        try:
+            offset = int(request.args.get('offset', 0))
+            limit = int(request.args.get('limit', 20)) # Default to 20 messages
+        except ValueError:
+            return jsonify({"success": False, "message": "offset và limit phải là số nguyên."}), 400
+
         history = []
         if os.path.exists(CHAT_HISTORY_FILE):
             with open(CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
-                try: 
+                try:
                     history = json.load(f)
-                except json.JSONDecodeError: 
+                except json.JSONDecodeError:
                     pass # Return empty list if file is corrupted
-        return jsonify(history)
+
+        total_messages = len(history)
+
+        # Calculate start and end index for slicing from the *end* of the list
+        start_index = max(0, total_messages - offset - limit)
+        end_index = total_messages - offset
+
+        # Ensure indices are valid and prevent negative slicing
+        if start_index >= end_index:
+             return jsonify({"messages": [], "total": total_messages})
+
+        paginated_history = history[start_index:end_index]
+
+        return jsonify({
+            "messages": paginated_history,
+            "total": total_messages
+        })
+
+
+# --- Change Password Page Route ---
+@app.route('/change-password')
+@login_required
+def change_password_page():
+    """Serves the change password page."""
+    return render_template('change-password.html')
+
+# --- API Endpoint for Changing Password ---
+@app.route('/api/change-password', methods=['POST'])
+@login_required
+def api_change_password():
+    data = request.get_json()
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+    confirm_password = data.get('confirm_password')
+
+    if not all([old_password, new_password, confirm_password]):
+        return jsonify({"success": False, "message": "Vui lòng nhập đầy đủ thông tin."}), 400
+
+    if new_password != confirm_password:
+        return jsonify({"success": False, "message": "Mật khẩu mới và xác nhận mật khẩu không khớp."}), 400
+
+    username = session['user']['username']
+    users = load_users()
+    user_data = users.get(username)
+
+    if not user_data or not bcrypt.checkpw(old_password.encode('utf-8'), user_data['password'].encode('utf-8')):
+        return jsonify({"success": False, "message": "Mật khẩu cũ không đúng."}), 401
+
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    users[username]['password'] = hashed_password
+
+    try:
+        with open(USERS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(users, f, ensure_ascii=False, indent=4)
+        
+        # After successfully changing the portal password, try to update it on the NAS
+        nas_success, nas_message = _update_nas_user_password(username, new_password)
+        if not nas_success:
+            app.logger.warning(f"Portal password for '{username}' was changed, but NAS password update failed: {nas_message}")
+            return jsonify({
+                "success": True, 
+                "message": "Đổi mật khẩu portal thành công, nhưng không thể đồng bộ với NAS. Vui lòng liên hệ quản trị viên."
+            })
+            
+        return jsonify({"success": True, "message": "Đổi mật khẩu thành công và đã được đồng bộ với NAS."})
+
+    except IOError:
+        return jsonify({"success": False, "message": "Lỗi khi lưu mật khẩu mới."}), 500
 
 # --- Admin Panel Routes ---
 @app.route('/admin')

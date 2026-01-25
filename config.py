@@ -21,5 +21,12 @@ REMOTE_PATH = os.environ.get('REMOTE_PATH', '/volume1/Portal') # The absolute pa
 NAS_ADMIN_USER = os.environ.get('NAS_ADMIN_USER', 'nas_admin')
 NAS_ADMIN_PASSWORD = os.environ.get('NAS_ADMIN_PASSWORD', 'nas_password')
 
+# --- Synology NAS Guest Credentials for Public Downloads ---
+# It's recommended to create a dedicated, read-only user on your NAS
+# for public file downloads and put its credentials here.
+NAS_GUEST_USER = os.environ.get('NAS_GUEST_USER', 'nas_guest')
+NAS_GUEST_PASSWORD = os.environ.get('NAS_GUEST_PASSWORD', 'nas_guest_password')
+
+
 
 # Add any other configuration variables your application might need below.

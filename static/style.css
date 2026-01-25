@@ -1,5 +1,5 @@
 body {
-  background-image: url("/static/img/background/1.jpg");
+  background-image: url("/static/img/background/1.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -296,6 +296,8 @@ body {
 
 /* --- Chat Bubble Styles --- */
 .chat-messages {
+  height: 550px; /* Set a fixed height for the chat window */
+  overflow-y: auto; /* Add a scrollbar when content overflows */
   display: flex;
   flex-direction: column;
   gap: 5px; /* Khoảng cách giữa các tin nhắn */
@@ -377,4 +379,36 @@ body {
   display: flex;
   padding-top: 10px;
   border-top: 1px solid #dee2e6;
+}
+
+/* --- Avatar Dropdown Styles --- */
+.avatar-btn {
+  background-color: #007bff;
+  color: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 1px solid #ccc;
+  padding: 0;
+}
+
+.avatar-btn:hover {
+  background-color: #0056b3;
+}
+
+.avatar-btn:focus, .avatar-btn.focus {
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.5);
+}
+
+.dropdown-toggle-split::after {
+  display: none; /* Hide the default Bootstrap caret */
+}
+
+.dropdown-menu {
+  min-width: auto;
+  padding: 0.5rem 0;
 }

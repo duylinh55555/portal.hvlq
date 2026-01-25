@@ -79,8 +79,8 @@ updateVisitCounter();
 
 // Background slideshow
 const backgroundImages = [
-  '/static/img/background/1.jpg',
-  '/static/img/background/3.jpg'
+  '/static/img/background/jpg/1.JPG',
+  '/static/img/background/3.PNG'
 ];
 
 let currentImageIndex = 0;
@@ -96,7 +96,7 @@ setInterval(changeBackgroundImage, 10000); // Change image every 10 seconds
 document.addEventListener('DOMContentLoaded', function() {
     // --- Common Elements ---
     const addNewButton = document.querySelector('.btn-add-new');
-    const logoutButton = document.querySelector('.btn-logout');
+    const logoutButton = document.querySelector('.logout-link');
     const loginLink = document.getElementById('login-link');
     let isLoggedIn = false;
     let currentUser = null;
@@ -134,15 +134,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // =================================================================
-    // --- CHAT FUNCTIONS ---
+    // --- CHAT FUNCTIONS (with Infinite Scroll) ---
     // =================================================================
 
-    function renderChatMessages(messages) {
-        chatMessages.innerHTML = ''; // Clear old messages
-        if (messages.length === 0) {
+    let chatOffset = 0;
+    const chatLimit = 30; // Number of messages to load each time
+    let totalChatMessages = 0;
+    let isLoadingMoreMessages = false;
+    let allChatMessagesLoaded = false;
+
+    // --- Renders messages (either prepending for old, or resetting for new) ---
+    function renderChatMessages(messages, prepend = false) {
+        if (!prepend) {
+            chatMessages.innerHTML = ''; // Clear for initial load
+        }
+        
+        if (messages.length === 0 && !prepend) {
             chatMessages.innerHTML = '<div class="chat-message-server">Chưa có tin nhắn nào.</div>';
             return;
         }
+
+        const fragment = document.createDocumentFragment();
 
         messages.forEach(msg => {
             const msgContainer = document.createElement('div');
@@ -151,6 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const msgElement = document.createElement('div');
             msgElement.classList.add('chat-message');
             
+            // Check if the message is from the current user
             if (currentUser && msg.username === currentUser.username) {
                 msgContainer.classList.add('my-message-container');
                 msgElement.classList.add('my-message');
@@ -173,22 +186,98 @@ document.addEventListener('DOMContentLoaded', function() {
             
             msgContainer.appendChild(authorSpan);
             msgContainer.appendChild(msgElement);
-            chatMessages.appendChild(msgContainer);
+            fragment.appendChild(msgContainer);
         });
 
-        // Auto-scroll to the bottom
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    async function loadChatMessages() {
-        try {
-            const response = await fetch('/api/chat/messages');
-            const messages = await response.json();
-            renderChatMessages(messages);
-        } catch (error) {
-            console.error('Error loading chat messages:', error);
+        if (prepend) {
+            const oldScrollHeight = chatMessages.scrollHeight;
+            const oldScrollTop = chatMessages.scrollTop;
+            chatMessages.insertBefore(fragment, chatMessages.firstChild);
+            // Restore scroll position to prevent jumping
+            chatMessages.scrollTop = oldScrollTop + (chatMessages.scrollHeight - oldScrollHeight);
+        } else {
+            chatMessages.appendChild(fragment);
+            // Auto-scroll to the bottom on initial load
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
+
+    // --- Loads more messages when scrolling up ---
+    async function loadMoreChatMessages() {
+        if (isLoadingMoreMessages || allChatMessagesLoaded) {
+            return;
+        }
+
+        isLoadingMoreMessages = true;
+
+        try {
+            const response = await fetch(`/api/chat/messages?limit=${chatLimit}&offset=${chatOffset}`);
+            const data = await response.json();
+            
+            if (data.messages && data.messages.length > 0) {
+                // Prepend older messages to the top
+                renderChatMessages(data.messages, true);
+                chatOffset += data.messages.length;
+            } else {
+                allChatMessagesLoaded = true; // No more messages to load
+                console.log("All chat messages loaded.");
+            }
+        } catch (error) {
+            console.error('Error loading more chat messages:', error);
+        } finally {
+            isLoadingMoreMessages = false;
+        }
+    }
+
+    // --- Initial load of chat messages ---
+    async function initialLoadChatMessages() {
+        // Reset state
+        chatOffset = 0;
+        allChatMessagesLoaded = false;
+        isLoadingMoreMessages = false;
+        chatMessages.innerHTML = '<div class="chat-message-server">Đang tải tin nhắn...</div>';
+        
+        try {
+            const response = await fetch(`/api/chat/messages?limit=${chatLimit}&offset=0`);
+            const data = await response.json();
+
+            renderChatMessages(data.messages || []);
+            totalChatMessages = data.total;
+            chatOffset = data.messages.length;
+
+            if (chatOffset >= totalChatMessages) {
+                allChatMessagesLoaded = true;
+            }
+
+        } catch (error) {
+            console.error('Error loading initial chat messages:', error);
+            chatMessages.innerHTML = '<div class="chat-message-server">Lỗi khi tải tin nhắn.</div>';
+        }
+    }
+    
+    // --- Polls for NEW messages, only re-renders if user is at the bottom ---
+    async function pollForNewMessages() {
+        // Only poll if the user is at the bottom of the chat
+        const isAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 50;
+        if (!isAtBottom) {
+            return; // User is scrolling through history, don't interrupt
+        }
+
+        try {
+            const response = await fetch(`/api/chat/messages?limit=${chatLimit}&offset=0`);
+            const data = await response.json();
+            
+            // If the total has changed, re-render
+            if (data.total !== totalChatMessages) {
+                renderChatMessages(data.messages || []);
+                totalChatMessages = data.total;
+                chatOffset = data.messages.length;
+            }
+        } catch (error) {
+            console.error('Error polling for new messages:', error);
+        }
+    }
+
 
     async function sendMessage(message) {
         if (!message) return;
@@ -201,7 +290,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (response.ok) {
                 chatInput.value = '';
-                loadChatMessages();
+                // After sending, immediately refresh the chat to show the new message
+                await pollForNewMessages();
             } else {
                 const errorData = await response.json();
                 alert(`Lỗi: ${errorData.message}`);
@@ -211,7 +301,8 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Không thể gửi tin nhắn. Vui lòng thử lại.');
         }
     }
-
+    
+    // --- Event Listeners ---
     chatForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         const message = chatInput.value.trim();
@@ -225,6 +316,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    chatMessages.addEventListener('scroll', () => {
+        if (chatMessages.scrollTop === 0) {
+            loadMoreChatMessages();
+        }
+    });
+    
     saveGuestNameButton.addEventListener('click', async function() {
         const guestName = guestNameInput.value.trim();
         if (!guestName) {
@@ -241,11 +338,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             if (response.ok && data.success) {
                 shouldPromptForName = false;
-                currentUser = data.user; // Cập nhật người dùng hiện tại
+                currentUser = data.user;
                 updateUI(false, data.user);
                 guestNameModal.modal('hide');
-                sendMessage(pendingMessage); // Gửi tin nhắn đang chờ
-                pendingMessage = '';
+                if (pendingMessage) {
+                    sendMessage(pendingMessage);
+                    pendingMessage = '';
+                }
             } else {
                 alert(data.message || 'Lưu tên thất bại.');
             }
@@ -253,6 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Đã xảy ra lỗi khi lưu tên.');
         }
     });
+
 
 
     // =================================================================
@@ -307,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     attachmentItem.classList.add('doc-attachment-item');
 
                     const attachmentLink = document.createElement('a');
-                    attachmentLink.href = `/api/nas/download/${file}`;
+                    attachmentLink.href = `/api/public/download/${file}`;
                     attachmentLink.rel = 'noopener noreferrer';
                     attachmentLink.textContent = file;
 
@@ -408,20 +508,34 @@ document.addEventListener('DOMContentLoaded', function() {
         const userStatusDiv = document.getElementById('user-status');
         const adminPanelLink = document.getElementById('admin-panel-link');
         const addNewButton = document.querySelector('.btn-add-new');
+        const userDropdown = document.getElementById('user-dropdown');
+        const avatarInitials = document.getElementById('avatar-initials');
 
         // Reset all controls first
-        logoutButton.style.display = 'none';
         loginLink.style.display = 'none';
         adminPanelLink.style.display = 'none';
+        userDropdown.style.display = 'none';
         addNewButton.style.display = 'none';
         chatInput.disabled = false;
+        userStatusDiv.textContent = '';
+
 
         if (loggedIn) {
-            logoutButton.style.display = 'inline-block';
+            userDropdown.style.display = 'inline-block';
             chatInput.placeholder = `Nhập tin nhắn...`;
+            
             if (userStatusDiv) {
                 userStatusDiv.textContent = `Xin chào, ${user.name}`;
             }
+
+            if(avatarInitials && user.name) {
+                const nameParts = user.name.split(' ');
+                const initials = nameParts.length > 1 
+                    ? nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)
+                    : nameParts[0].substring(0, 2);
+                avatarInitials.textContent = initials.toUpperCase();
+            }
+
             // Show admin controls if the user is an admin
             if (user && user.role === 'admin') {
                 adminPanelLink.style.display = 'inline-block';
@@ -432,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (shouldPromptForName) {
                  chatInput.placeholder = 'Nhập tin nhắn và nhấn gửi để đặt tên...';
                  if (userStatusDiv) {
-                    userStatusDiv.textContent = `Bạn là Khách (chưa đặt tên)`;
+                    userStatusDiv.textContent = `Bạn là Khách`;
                 }
             } else if (user) { // Guest with a name
                 chatInput.placeholder = `Nhập tin nhắn (với tư cách ${user.name})...`;
@@ -459,9 +573,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Load initial data and start polling
         loadAnnouncements(true); // Tải lần đầu
-        loadChatMessages();
+        initialLoadChatMessages();
         if (chatPollInterval) clearInterval(chatPollInterval);
-        chatPollInterval = setInterval(loadChatMessages, 5000); // Poll every 5 seconds
+        chatPollInterval = setInterval(pollForNewMessages, 5000); // Poll every 5 seconds
     }
 
     addNewButton.addEventListener('click', function() {
