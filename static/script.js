@@ -97,24 +97,24 @@ updateVisitCounter();
 
 // Background slideshow
 const backgroundImages = [
-  '/static/img/background/jpg/1.JPG',
-  '/static/img/background/jpg/2.JPG',
-  '/static/img/background/jpg/3.JPG',
-  '/static/img/background/jpg/4.JPG',
-  '/static/img/background/jpg/5.JPG',
-  '/static/img/background/jpg/6.JPG',
-  '/static/img/background/jpg/7.JPG',
-  '/static/img/background/jpg/8.JPG',
-  '/static/img/background/jpg/9.JPG',
-  '/static/img/background/jpg/10.JPG',
-  '/static/img/background/jpg/11.JPG',
-  '/static/img/background/jpg/12.JPG',
-  '/static/img/background/jpg/13.JPG',
-  '/static/img/background/jpg/14.JPG',
-  '/static/img/background/jpg/15.JPG',
-  '/static/img/background/jpg/16.JPG',
-  '/static/img/background/jpg/17.JPG',
-  '/static/img/background/jpg/18.JPG'
+  '/static/img/background/1.JPG',
+  '/static/img/background/2.JPG',
+  '/static/img/background/3.JPG',
+  '/static/img/background/4.JPG',
+  '/static/img/background/5.JPG',
+  '/static/img/background/6.JPG',
+  '/static/img/background/7.JPG',
+  '/static/img/background/8.JPG',
+  '/static/img/background/9.JPG',
+  '/static/img/background/10.JPG',
+  '/static/img/background/11.JPG',
+  '/static/img/background/12.JPG',
+  '/static/img/background/13.JPG',
+  '/static/img/background/14.JPG',
+  '/static/img/background/15.JPG',
+  '/static/img/background/16.JPG',
+  '/static/img/background/17.JPG',
+  '/static/img/background/18.JPG'
 ];
 
 let currentImageIndex = 0;
