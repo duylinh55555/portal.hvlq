@@ -28,9 +28,10 @@ body {
   background-position: right;
   background-repeat: no-repeat;
   color: #333;
-  padding: 15px 0;
+  padding: 30px 0 50px 0; /* Hạ thấp nội dung header xuống một chút */
   text-align: left;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
 }
 .main-header h1 {
   margin: 0;
@@ -67,8 +68,8 @@ body {
 }
 .section {
   background-color: rgba(255, 255, 255, 0.92);
-  padding: 25px;
-  margin: 30px 0px;
+  padding: 25px; /* Giữ nguyên padding */
+  margin: 30px 0px; /* Đẩy phần section lên cao hơn bằng cách giảm margin-top */
   border-radius: 8px;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 }
@@ -196,8 +197,9 @@ body {
 }
 
 .header-right-column {
-  position: relative;
-  right: 7.5rem;
+  position: relative; /* Giữ nguyên position: relative để thuộc tính 'right' có hiệu lực */
+  right: 10rem; /* Dịch chuyển sang trái thêm 1cm (từ 7.5rem lên 9.875rem) */
+  top: 10px; /* Dịch chuyển xuống 10px */
 }
 
 .main-footer .container-fluid {
