@@ -612,6 +612,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // --- Handle Enter key for login ---
+    document.getElementById('username').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Stop form submission
+            document.getElementById('password').focus(); // Move to password
+        }
+    });
+    document.getElementById('password').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Stop form submission
+            loginSubmitButton.click(); // Trigger login
+        }
+    });
+
     logoutButton.addEventListener('click', async function() {
         try {
             const response = await fetch('/api/logout');
