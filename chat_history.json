@@ -110,5 +110,23 @@
         "ip_address": "127.0.0.1",
         "mac_address": "localhost",
         "timestamp": "2026-01-25T09:53:24.096986Z"
+    },
+    {
+        "id": 1769500242089,
+        "username": "127.0.0.1",
+        "name": "nja",
+        "message": "na",
+        "ip_address": "127.0.0.1",
+        "mac_address": "localhost",
+        "timestamp": "2026-01-27T14:50:42.089143Z"
+    },
+    {
+        "id": 1769500276215,
+        "username": "192.168.1.3",
+        "name": "L",
+        "message": "Chào nhé",
+        "ip_address": "192.168.1.3",
+        "mac_address": "5A:6F:56:4F:82:8D",
+        "timestamp": "2026-01-27T14:51:16.215207Z"
     }
 ]

@@ -239,7 +239,7 @@ body {
 }
 
 .right-section {
-  min-height: 858px;
+  min-height: 840px;
   background-color: rgba(250, 250, 250, 0.92);
 }
 
@@ -316,12 +316,13 @@ body {
 
 /* --- Chat Bubble Styles --- */
 .chat-messages {
-  height: 550px; /* Set a fixed height for the chat window */
+  height: 632px; /* Set a fixed height for the chat window */
   overflow-y: auto; /* Add a scrollbar when content overflows */
   display: flex;
   flex-direction: column;
   gap: 5px; /* Khoảng cách giữa các tin nhắn */
   padding: 10px;
+  border-bottom: 1px solid #dee2e6; /* Add the line here */
 }
 
 .chat-message-container {
@@ -397,8 +398,19 @@ body {
 
 #chat-input-form {
   display: flex;
-  padding-top: 10px;
-  border-top: 1px solid #dee2e6;
+  align-items: stretch; /* Vertically align input and button */
+  gap: 8px; /* Add space between elements */
+  margin-top: 20px; /* Adjust space above the form */
+}
+
+#chat-message-input {
+  flex-grow: 1; /* Allow input to take up available space */
+}
+
+#chat-input-form button {
+  flex-shrink: 0; /* Prevent button from shrinking */
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 
 /* --- Avatar Dropdown Styles --- */
