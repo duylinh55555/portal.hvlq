@@ -31,6 +31,55 @@ CHAT_HISTORY_FILE = 'chat_history.json'
 # Cấu hình file lưu trữ người dùng
 USERS_FILE = 'users.json'
 
+# Cấu hình file lưu lượt truy cập
+VISIT_LOGS_FILE = 'visit_logs.json'
+
+def log_visit_and_get_counts():
+    """Ghi lại lượt truy cập và trả về số đếm."""
+    now = datetime.utcnow()
+    today_str = now.strftime('%Y-%m-%d')
+    this_month_str = now.strftime('%Y-%m')
+    
+    try:
+        if os.path.exists(VISIT_LOGS_FILE) and os.path.getsize(VISIT_LOGS_FILE) > 0:
+            with open(VISIT_LOGS_FILE, 'r', encoding='utf-8') as f:
+                timestamps = json.load(f)
+        else:
+            timestamps = []
+    except (json.JSONDecodeError, IOError):
+        timestamps = []
+
+    # Ghi lại lượt truy cập mới
+    timestamps.append(now.isoformat())
+
+    try:
+        with open(VISIT_LOGS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(timestamps, f)
+    except IOError:
+        app.logger.error("Could not write to visit logs file.")
+
+    # Tính toán số đếm
+    daily_count = 0
+    monthly_count = 0
+    
+    for ts_str in timestamps:
+        try:
+            ts = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+            if ts.strftime('%Y-%m-%d') == today_str:
+                daily_count += 1
+            if ts.strftime('%Y-%m') == this_month_str:
+                monthly_count += 1
+        except ValueError:
+            continue # Bỏ qua nếu timestamp không hợp lệ
+
+    total_count = len(timestamps)
+
+    return {
+        "daily": daily_count,
+        "monthly": monthly_count,
+        "total": total_count
+    }
+
 def load_users():
     """Tải danh sách người dùng từ file JSON."""
     if not os.path.exists(USERS_FILE):
@@ -203,9 +252,16 @@ def _get_mac_address(ip_address):
 # --- Routes chính ---
 @app.route('/')
 def index():
+    # Log visit and get counts
+    visit_counts = log_visit_and_get_counts()
+    
     # Pass server time in ISO format for easy parsing by JavaScript
     initial_server_time_iso = datetime.now().isoformat()
-    return render_template('giaodien.html', initial_server_time_iso=initial_server_time_iso)
+    return render_template(
+        'giaodien.html', 
+        initial_server_time_iso=initial_server_time_iso,
+        visit_counts=visit_counts
+    )
 
 
 
@@ -430,7 +486,7 @@ def get_announcements():
     return jsonify({"announcements": paginated_announcements, "total": total_announcements})
 
 @app.route('/api/announcements', methods=['POST'])
-@admin_required
+@login_required # Thay đổi từ admin_required để mọi người dùng đăng nhập đều có thể tạo thông báo
 def create_announcement():
     if 'title' not in request.form or not request.form['title'].strip():
         return jsonify({"success": False, "message": "Tiêu đề là bắt buộc."}), 400

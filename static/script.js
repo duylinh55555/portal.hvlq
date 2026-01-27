@@ -50,50 +50,7 @@ function startLiveClock() {
 }
 startLiveClock(); // Bắt đầu chạy đồng hồ
 
-// Bộ đếm lượt truy cập
-function updateVisitCounter() {
-  // Lấy ngày giờ hiện tại
-  const now = new Date();
-  const today = now.toDateString(); // Ví dụ: "Mon Jan 01 2024"
-  const thisMonth = now.getFullYear() + '-' + now.getMonth(); // Ví dụ: "2024-0" cho tháng 1
 
-  // Lấy dữ liệu từ localStorage, nếu không có thì mặc định là 0
-  let dailyVisits = parseInt(localStorage.getItem('dailyVisits')) || 0;
-  let monthlyVisits = parseInt(localStorage.getItem('monthlyVisits')) || 0;
-  let totalVisits = parseInt(localStorage.getItem('totalVisits')) || 0;
-  let lastVisitDate = localStorage.getItem('lastVisitDate');
-  let lastVisitMonth = localStorage.getItem('lastVisitMonth');
-
-  // Kiểm tra nếu là ngày mới, reset lượt truy cập trong ngày
-  if (lastVisitDate !== today) {
-    dailyVisits = 0;
-    localStorage.setItem('lastVisitDate', today);
-  }
-
-  // Kiểm tra nếu là tháng mới, reset lượt truy cập trong tháng
-  if (lastVisitMonth !== thisMonth) {
-    monthlyVisits = 0;
-    localStorage.setItem('lastVisitMonth', thisMonth);
-  }
-
-  // Tăng số lượt truy cập cho lần ghé thăm hiện tại
-  dailyVisits++;
-  monthlyVisits++;
-  totalVisits++;
-
-  // Lưu lại các giá trị đã cập nhật vào localStorage
-  localStorage.setItem('dailyVisits', dailyVisits);
-  localStorage.setItem('monthlyVisits', monthlyVisits);
-  localStorage.setItem('totalVisits', totalVisits);
-
-  // Hiển thị các số liệu lên trang
-  document.getElementById('dailyCount').textContent = dailyVisits;
-  document.getElementById('monthlyCount').textContent = monthlyVisits;
-  document.getElementById('totalCount').textContent = totalVisits;
-}
-
-// Gọi hàm bộ đếm khi trang được tải
-updateVisitCounter();
 
 // Background slideshow
 const backgroundImages = [
@@ -570,9 +527,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 avatarInitials.textContent = initials.toUpperCase();
             }
 
-            // Show admin controls if the user is an admin
+            // Show admin panel link only if the user is an admin
             if (user && user.role === 'admin') {
                 adminPanelLink.style.display = 'inline-block';
+            }
+            
+            // Show add new button for any logged-in user
+            if (loggedIn) {
                 addNewButton.style.display = 'inline-block';
             }
         } else { // Not logged in (guest)

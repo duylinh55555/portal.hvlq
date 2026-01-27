@@ -18,10 +18,7 @@
   </head>
 
   <body class="container-fluid" style="padding: 0">
-    <header
-      class="main-header"
-      style="background-image: url('{{ url_for('static', filename='img/header_footer/header-right.jpg') }}');"
-    >
+    <header class="main-header">
       <div class="container-fluid">
         <div class="d-flex align-items-start">
           <div class="header-logo">
@@ -761,9 +758,9 @@
           </p>
         </div>
         <div id="visitCounter" class="visit-counter">
-          <p>Truy cập hôm nay: <span id="dailyCount">0</span></p>
-          <p>Truy cập tháng này: <span id="monthlyCount">0</span></p>
-          <p>Tổng lượt truy cập: <span id="totalCount">0</span></p>
+          <p>Truy cập hôm nay: <span id="dailyCount">{{ visit_counts.daily }}</span></p>
+          <p>Truy cập tháng này: <span id="monthlyCount">{{ visit_counts.monthly }}</span></p>
+          <p>Tổng lượt truy cập: <span id="totalCount">{{ visit_counts.total }}</span></p>
         </div>
       </div>
     </footer>

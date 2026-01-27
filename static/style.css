@@ -24,14 +24,27 @@ body {
   padding-right: 0 !important;
 }
 .main-header {
-  background-size: auto 100%;
-  background-position: right;
-  background-repeat: no-repeat;
   color: #333;
   padding: 30px 0 50px 0; /* Hạ thấp nội dung header xuống một chút */
   text-align: left;
+  position: relative; /* Needed for the pseudo-element positioning */
+}
+
+/* Pseudo-element to hold the background and the mask */
+.main-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("/static/img/header_footer/header-right.jpg");
+  background-size: auto 100%;
+  background-position: right;
+  background-repeat: no-repeat;
   -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
   mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+  z-index: -1; /* Place the background behind the header's content */
 }
 .main-header h1 {
   margin: 0;
